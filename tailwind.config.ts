@@ -1,96 +1,85 @@
-import type { Config } from "tailwindcss";
+/** @type {import('tailwindcss').Config} */
 
 export default {
-	darkMode: ["class"],
-	content: [
-		"./pages/**/*.{ts,tsx}",
-		"./components/**/*.{ts,tsx}",
-		"./app/**/*.{ts,tsx}",
-		"./src/**/*.{ts,tsx}",
-	],
-	prefix: "",
+	content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  
 	theme: {
-		container: {
-			center: true,
-			padding: '2rem',
-			screens: {
-				'2xl': '1400px'
-			}
+	  extend: {
+		colors: {
+		  base: {
+			white: "#FFFFFF",
+			black: "#000000",
+		  },
+  
+		  green: {
+			50: "#EAF2EB",
+			100: "#BED7BF",
+			200: "#9FC3A1",
+			300: "#73A876",
+			400: "#58975B",
+			500: "#2E7D32",
+			600: "#2A722E",
+			700: "#215924",
+			800: "#19451C",
+			900: "#133515",
+		  },
+  
+		  yellow: {
+			50: "#FEF9E8",
+			100: "#FDEDB8",
+			200: "#FCE496",
+			300: "#FAD766",
+			400: "#F9D048",
+			500: "#F8C41A",
+			600: "#E2B218",
+			700: "#B08B12",
+			800: "#886C0E",
+			900: "#68520B",
+		  },
+  
+		  text: {
+			50: "#E9E9E9",
+			100: "#BAB9BA",
+			200: "#989898",
+			300: "#69686A",
+			400: "#4C4B4D",
+			500: "#1F1E20",
+			600: "#1C1B1D",
+			700: "#161517",
+			800: "#111112",
+			900: "#0D0D0D",
+		  },
+  
+		  background: {
+			secondary: "#F7F7F7",
+		  },
 		},
-		extend: {
-			colors: {
-				border: 'hsl(var(--border))',
-				input: 'hsl(var(--input))',
-				ring: 'hsl(var(--ring))',
-				background: 'hsl(var(--background))',
-				foreground: 'hsl(var(--foreground))',
-				primary: {
-					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
-				},
-				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
-					foreground: 'hsl(var(--secondary-foreground))'
-				},
-				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
-					foreground: 'hsl(var(--destructive-foreground))'
-				},
-				muted: {
-					DEFAULT: 'hsl(var(--muted))',
-					foreground: 'hsl(var(--muted-foreground))'
-				},
-				accent: {
-					DEFAULT: 'hsl(var(--accent))',
-					foreground: 'hsl(var(--accent-foreground))'
-				},
-				popover: {
-					DEFAULT: 'hsl(var(--popover))',
-					foreground: 'hsl(var(--popover-foreground))'
-				},
-				card: {
-					DEFAULT: 'hsl(var(--card))',
-					foreground: 'hsl(var(--card-foreground))'
-				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
-				}
-			},
-			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
-			},
-			keyframes: {
-				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
-				},
-				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
-				}
-			},
-			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
-		}
+  
+		fontFamily: {
+		  poppins: ["Poppins", "sans-serif"],
+		},
+  
+		fontSize: {
+		  h1: ["56px", { lineHeight: "130%" }],
+		  h2: ["52px", { lineHeight: "130%" }],
+		  h3: ["48px", { lineHeight: "130%" }],
+		  h4: ["40px", { lineHeight: "130%" }],
+		  h5: ["36px", { lineHeight: "130%" }],
+		  h6: ["32px", { lineHeight: "130%" }],
+  
+		  body: ["28px", { lineHeight: "130%" }],
+		  body1: ["26px", { lineHeight: "130%" }],
+		  body2: ["24px", { lineHeight: "130%" }],
+  
+		  title: ["20px", { lineHeight: "130%" }],
+		  smtitle: ["18px", { lineHeight: "130%" }],
+  
+		  caption: ["16px", { lineHeight: "150%" }],
+		  label: ["14px", { lineHeight: "150%" }],
+		},
+	  },
 	},
-	plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+  
+	plugins: [],
+  };
+  
