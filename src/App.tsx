@@ -6,6 +6,7 @@ import Home from "./pages/Home/Home";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import Aboutus from "./pages/AboutUs/Aboutus";
 
 const App = () => {
   return (
@@ -14,6 +15,7 @@ const App = () => {
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/about" element={<Aboutus />}/>
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Footer />
