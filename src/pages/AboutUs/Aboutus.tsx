@@ -6,7 +6,12 @@ import CTA from "@/components/CTA";
 export default function Aboutus() {
   return (
     <>
-      <PageHeader title="About Us" breadcrumb="Home / About Us" />
+       <PageHeader 
+  title="About Us"
+  breadcrumbs={[
+    { label: "Home", href: "/" },
+  { label: "About Us" } 
+  ]}/>
       <AboutIntro/>
       <AboutVideoSection/>
       <CTA/>
