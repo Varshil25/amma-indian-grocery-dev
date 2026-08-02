@@ -1,0 +1,160 @@
+/* ----------- TAILWIND CORE ----------- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ----------- GLOBAL BASE RESET ----------- */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-white text-text-900 font-poppins;
+}
+
+/* Skip to content — accessibility */
+.skip-to-content {
+  @apply absolute -top-full left-4 z-[100] bg-green-500 text-white px-4 py-2 rounded-b-lg font-medium text-sm;
+  transition: top 0.2s;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* Global focus-visible for keyboard accessibility */
+@layer base {
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-green-500 ring-offset-2;
+  }
+}
+
+/* ----------- DESIGN SYSTEM TOKENS ----------- */
+@layer utilities {
+  /* Typography — Headings */
+  .heading-1 {
+    @apply text-h1 font-semibold text-text-900;
+  }
+  .heading-2 {
+    @apply text-h2 font-semibold text-text-900;
+  }
+  .heading-3 {
+    @apply text-h3 font-semibold text-text-900;
+  }
+  .heading-4 {
+    @apply text-h4 font-semibold text-text-900;
+  }
+  .heading-5 {
+    @apply text-h5 font-semibold text-text-900;
+  }
+  .heading-6 {
+    @apply text-h6 font-semibold text-text-900;
+  }
+
+  /* Body Text */
+  .body-lg {
+    @apply text-body font-normal text-text-600;
+  }
+  .body-md {
+    @apply text-body1 font-normal text-text-600;
+  }
+  .body-sm {
+    @apply text-body2 font-normal text-text-600;
+  }
+
+  /* Titles */
+  .title {
+    @apply text-title font-medium text-text-900;
+  }
+  .subtitle {
+    @apply text-smtitle font-medium text-text-800;
+  }
+
+  /* Caption & Label */
+  .caption {
+    @apply text-caption text-text-500;
+  }
+  .label {
+    @apply text-label text-text-500 uppercase;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition;
+  }
+
+  .btn-outline {
+    @apply border border-green-500 text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-50 transition;
+  }
+
+  .btn-yellow {
+    @apply bg-yellow-500 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition;
+  }
+
+  /* Component Utilities */
+  .card {
+    @apply bg-white border border-text-50 rounded-xl shadow-card hover:shadow-card-hover transition-shadow;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-label font-medium;
+  }
+
+  .badge-green {
+    @apply badge bg-green-50 text-green-600;
+  }
+
+  .badge-yellow {
+    @apply badge bg-yellow-50 text-yellow-700;
+  }
+
+  .badge-red {
+    @apply badge bg-red-50 text-red-600;
+  }
+
+  .input {
+    @apply w-full h-12 border border-text-100 rounded-lg px-4 text-caption text-text-500 bg-white shadow-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition;
+  }
+
+  .input-label {
+    @apply block text-text-400 text-caption font-medium mb-2;
+  }
+
+  .section-padding {
+    @apply py-16 md:py-20;
+  }
+
+  /* Focus styles for accessibility */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2;
+  }
+}
+
+/* ----------- ANIMATIONS ----------- */
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}
+
+.floating {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+

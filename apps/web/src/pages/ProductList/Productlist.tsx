@@ -1,0 +1,159 @@
+import React from "react";
+import PageHeader from "../../components/PageHeader";
+import ProductCard from "./ProductCard";
+import Pagination from "../../components/Pagination";
+import { useParams, useSearchParams } from "react-router-dom";
+import { useProducts, type ProductQueryParams } from "../../hooks/use-products";
+import { mapProductToCard } from "../../lib/product-helpers";
+
+// Fallback mock data for when API is not available
+import orange from "../../assets/Images/Homepage/orange.png";
+const mockProducts = Array.from({ length: 10 }).map((_, index) => ({
+  id: index,
+  category: "Fruits",
+  name: "Oranges",
+  weight: "1.0 kg",
+  price: "8.00",
+  oldPrice: "10.00",
+  rating: 4.8,
+  discount: "20%",
+  img: orange,
+}));
+
+const sortOptions = [
+  { value: "", label: "Sort by" },
+  { value: "price_asc", label: "Price: Low to High" },
+  { value: "price_desc", label: "Price: High to Low" },
+  { value: "name_asc", label: "Name: A to Z" },
+  { value: "name_desc", label: "Name: Z to A" },
+  { value: "rating", label: "Top Rated" },
+  { value: "newest", label: "Newest" },
+];
+
+const ProductList: React.FC = () => {
+  const { category } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = parseInt(searchParams.get("page") || "1");
+  const sort = searchParams.get("sort") || "";
+
+  const queryParams: ProductQueryParams = {
+    category,
+    page,
+    sort: sort || undefined,
+    limit: 20,
+  };
+
+  const { data, isLoading, isError } = useProducts(queryParams);
+
+  const handleSortChange = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set("sort", value);
+    } else {
+      params.delete("sort");
+    }
+    params.delete("page");
+    setSearchParams(params);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("page", String(newPage));
+    setSearchParams(params);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const categoryLabel = category ? category.replace(/-/g, " ") : "Products";
+
+  return (
+    <>
+      <PageHeader
+        title={categoryLabel}
+        breadcrumbs={[
+          { label: "Home", href: "/" },
+          { label: "All Categories", href: "/all-categories" },
+          { label: categoryLabel },
+        ]}
+      />
+
+      <div className="container mx-auto px-4 my-14">
+        {/* Top controls */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h2 className="text-h4 text-text-500 font-semibold capitalize">
+              {categoryLabel}
+            </h2>
+            {data?.pagination && (
+              <p className="text-body-sm text-text-200 mt-1">
+                {data.pagination.total} products found
+              </p>
+            )}
+          </div>
+
+          <select
+            className="border border-text-100 rounded-lg px-4 py-2 text-sm text-text-300"
+            value={sort}
+            onChange={(e) => handleSortChange(e.target.value)}
+          >
+            {sortOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Loading state */}
+        {isLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 justify-center">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex justify-center">
+                <div className="w-[280px] h-[380px] bg-background-secondary rounded-lg animate-pulse" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Error / API not available - show mock data */}
+        {isError && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 justify-center">
+            {mockProducts.map((product) => (
+              <div className="flex justify-center" key={product.id}>
+                <ProductCard {...product} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* API data */}
+        {data && !isLoading && (
+          <>
+            {data.products.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-text-300 text-body-lg">
+                  No products found in this category.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 justify-center">
+                {data.products.map((product) => (
+                  <div className="flex justify-center" key={product.id}>
+                    <ProductCard {...mapProductToCard(product)} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <Pagination
+              currentPage={data.pagination.page}
+              totalPages={data.pagination.totalPages}
+              onPageChange={handlePageChange}
+            />
+          </>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default ProductList;
