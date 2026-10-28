@@ -8,6 +8,9 @@ import { env } from "./config/env.js";
 
 const app = express();
 
+// Behind the host's proxy — needed so rate limiting sees real client IPs
+app.set("trust proxy", 1);
+
 // Security middleware
 app.use(helmet());
 app.use(
