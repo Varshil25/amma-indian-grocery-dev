@@ -33,7 +33,7 @@ export class AuthService {
         passwordHash,
         firstName: data.firstName,
         lastName: data.lastName,
-        phone: data.phone,
+        phone: data.phone || undefined, // blank form field arrives as "" and would collide on the unique index
         referralCode: userReferralCode,
       },
     });

@@ -46,7 +46,7 @@ export class UserService {
   }) {
     const user = await prisma.user.update({
       where: { id: userId },
-      data,
+      data: { ...data, phone: data.phone === "" ? null : data.phone },
       select: {
         id: true,
         email: true,

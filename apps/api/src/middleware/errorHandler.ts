@@ -69,6 +69,18 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
     return;
   }
 
+  // Handle unique constraint violations (e.g. phone or email already in use)
+  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+    const fields = (err.meta?.target as string[] | undefined)?.join(", ") || "value";
+    res.status(409).json({
+      error: {
+        code: "CONFLICT",
+        message: `An account with this ${fields} already exists`,
+      },
+    });
+    return;
+  }
+
   console.error("Unhandled error:", err);
   res.status(500).json({
     error: {
