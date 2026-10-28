@@ -191,7 +191,7 @@ export class AdminController {
   }
 
   async markMessageRead(req: Request, res: Response, next: NextFunction) {
-    try { res.json({ success: true, data: await adminService.markMessageRead(req.params.id) }); } catch (err) { next(err); }
+    try { res.json({ success: true, data: await adminService.markMessageRead(req.params.id as string) }); } catch (err) { next(err); }
   }
 }
 
