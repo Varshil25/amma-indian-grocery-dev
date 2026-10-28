@@ -68,6 +68,14 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500&display=swap"
       rel="stylesheet"
     />
+    <script>
+      // GitHub Pages deep links: 404.html stashes the requested URL, restore it here
+      (function () {
+        var r = sessionStorage.getItem("spa-redirect");
+        sessionStorage.removeItem("spa-redirect");
+        if (r && r !== location.href) history.replaceState(null, "", r);
+      })();
+    </script>
   </head>
 
   <body class="bg-white text-dark">

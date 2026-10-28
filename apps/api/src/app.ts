@@ -37,6 +37,9 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // API routes
+app.get("/", (_req, res) => {
+  res.json({ name: "Amma Grocery API", health: "/api/health" });
+});
 app.use("/api", routes);
 
 // Error handling (must be last)

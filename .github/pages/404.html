@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <script>
+      // GitHub Pages serves this for any unknown path. Send the visitor to the
+      // right app (web or admin); its index.html restores the original URL.
+      var base = "/amma-indian-grocery-dev/";
+      var p = location.pathname;
+      var app = p.indexOf(base + "admin") === 0 ? base + "admin/" : base;
+      sessionStorage.setItem("spa-redirect", location.href);
+      location.replace(app);
+    </script>
+  </head>
+  <body></body>
+</html>

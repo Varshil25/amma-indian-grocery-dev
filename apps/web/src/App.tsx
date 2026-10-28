@@ -37,7 +37,7 @@ const StaticPage = lazy(() => import("./pages/StaticPage"));
 const App = () => {
   return (
     <HelmetProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <ErrorBoundary>
           <a href="#main-content" className="skip-to-content">
             Skip to content

@@ -59,7 +59,7 @@ function forceLogout() {
   localStorage.removeItem("admin-token");
   localStorage.removeItem("admin-refresh-token");
   localStorage.removeItem("admin-user");
-  window.location.href = "/login";
+  window.location.href = `${import.meta.env.BASE_URL}login`;
 }
 
 async function request<T>(

@@ -42,7 +42,7 @@ class ApiClient {
       if (!res.ok) {
         // Refresh failed — clear auth state
         localStorage.removeItem("auth-storage");
-        window.location.href = "/login";
+        window.location.href = `${import.meta.env.BASE_URL}login`;
         return null;
       }
 
@@ -60,7 +60,7 @@ class ApiClient {
       return data.data.accessToken;
     } catch {
       localStorage.removeItem("auth-storage");
-      window.location.href = "/login";
+      window.location.href = `${import.meta.env.BASE_URL}login`;
       return null;
     }
   }
