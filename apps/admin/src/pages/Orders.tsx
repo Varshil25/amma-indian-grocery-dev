@@ -152,7 +152,7 @@ export default function Orders() {
           <p className="px-4 py-12 text-center text-red-600 text-sm">{errorMessage(error, "Couldn't load orders")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-cards w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Order</th>
@@ -174,18 +174,18 @@ export default function Orders() {
                       className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition cursor-pointer"
                     >
                       <td className="px-4 py-3">
-                        <span className="font-medium text-gray-900">#{order.orderNumber}</span>
+                        <span className="font-medium text-gray-900 whitespace-nowrap">#{order.orderNumber}</span>
                         <p className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleString()}</p>
                       </td>
-                      <td className="px-4 py-3">
+                      <td data-label="Customer" className="px-4 py-3">
                         <span className="text-gray-700">{order.customerName}</span>
                         <p className="text-xs text-gray-400">{order.customerEmail}</p>
                       </td>
-                      <td className="px-4 py-3">
+                      <td data-label="Type" className="px-4 py-3">
                         <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{order.fulfillmentType}</span>
                       </td>
-                      <td className="px-4 py-3 text-center text-gray-600">{order.itemCount}</td>
-                      <td className="px-4 py-3">
+                      <td data-label="Items" className="px-4 py-3 text-center text-gray-600">{order.itemCount}</td>
+                      <td data-label="Status" className="px-4 py-3">
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                             statusColors[order.status] || "bg-gray-100 text-gray-600"
@@ -195,7 +195,7 @@ export default function Orders() {
                           {fmtStatus(order.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td data-label="Payment" className="px-4 py-3">
                         {order.payment ? (
                           <span
                             className={`text-xs font-medium ${
@@ -215,13 +215,13 @@ export default function Orders() {
                                 : order.payment.status === "FAILED"
                                   ? "Failed"
                                   : "Unpaid"}
-                            <span className="block text-[10px] text-gray-400 font-normal">{paymentLabel(order.payment.method)}</span>
+                            <span className="block text-xs text-gray-400 font-normal">{paymentLabel(order.payment.method)}</span>
                           </span>
                         ) : (
                           <span className="text-xs text-yellow-600">Awaiting card payment</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right font-medium text-gray-900">{money(order.totalAmount)}</td>
+                      <td data-label="Total" className="px-4 py-3 text-right font-medium text-gray-900">{money(order.totalAmount)}</td>
                     </tr>
                   );
                 })}

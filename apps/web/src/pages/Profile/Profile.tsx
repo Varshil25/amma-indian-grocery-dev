@@ -74,16 +74,17 @@ export default function Profile() {
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "My Account" }]}
       />
       <section className="section-padding">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar */}
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Sidebar: 2×2 on phones, one row on tablets, a column on desktop */}
             <div className="lg:w-64 shrink-0">
-              <nav className="card p-2 flex lg:flex-col gap-1">
+              <nav aria-label="Account sections" className="card p-2 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-1 gap-1">
                 {tabs.map((tab) => (
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg text-body-md font-medium transition-colors w-full text-left ${
+                    aria-current={activeTab === tab.key ? "page" : undefined}
+                    className={`flex items-center justify-center lg:justify-start gap-2 lg:gap-3 px-3 lg:px-4 py-3 min-h-[44px] rounded-lg text-body-sm sm:text-body-md font-medium transition-colors w-full text-left ${
                       activeTab === tab.key
                         ? "bg-green-50 text-green-700"
                         : "text-text-300 hover:bg-background-secondary hover:text-text-500"
@@ -132,8 +133,8 @@ function ProfileTab() {
   if (isLoading) return <ProfileSkeleton />;
 
   return (
-    <div className="card p-6">
-      <h2 className="text-h5 font-semibold text-text-500 mb-6">
+    <div className="card p-4 sm:p-6">
+      <h2 className="text-h6 font-semibold text-text-500 mb-6">
         Personal Information
       </h2>
       <form
@@ -268,7 +269,7 @@ function AddressesTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-h5 font-semibold text-text-500">
+        <h2 className="text-h6 font-semibold text-text-500">
           Saved Addresses
         </h2>
         {!showForm && (
@@ -283,7 +284,7 @@ function AddressesTab() {
       </div>
 
       {showForm && (
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <h3 className="text-body-lg font-semibold text-text-500 mb-4">
             {editingId ? "Edit Address" : "New Address"}
           </h3>
@@ -371,7 +372,7 @@ function AddressesTab() {
       )}
 
       {!addresses?.length && !showForm ? (
-        <div className="card p-8 text-center">
+        <div className="card p-5 sm:p-8 text-center">
           <MapPin className="mx-auto text-text-100 mb-3" size={40} />
           <p className="text-text-300 text-body-md">
             No saved addresses yet. Add one for faster checkout!
@@ -440,8 +441,8 @@ function PasswordTab() {
   };
 
   return (
-    <div className="card p-6">
-      <h2 className="text-h5 font-semibold text-text-500 mb-6">
+    <div className="card p-4 sm:p-6">
+      <h2 className="text-h6 font-semibold text-text-500 mb-6">
         Change Password
       </h2>
       <form
@@ -527,20 +528,20 @@ function RewardsTab() {
   return (
     <div className="space-y-6">
       {/* Points Overview */}
-      <div className="card p-6">
-        <h2 className="text-h5 font-semibold text-text-500 mb-6">
+      <div className="card p-4 sm:p-6">
+        <h2 className="text-h6 font-semibold text-text-500 mb-6">
           Rewards Dashboard
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-green-50 rounded-xl p-5 text-center">
             <p className="text-body-sm text-green-700 mb-1">Available Points</p>
-            <p className="text-h3 font-bold text-green-600">
+            <p className="text-h4 font-bold text-green-600">
               {rewards?.availablePoints || 0}
             </p>
           </div>
           <div className="bg-background-secondary rounded-xl p-5 text-center">
             <p className="text-body-sm text-text-300 mb-1">Total Earned</p>
-            <p className="text-h3 font-bold text-text-500">
+            <p className="text-h4 font-bold text-text-500">
               {rewards?.totalPoints || 0}
             </p>
           </div>
@@ -558,7 +559,7 @@ function RewardsTab() {
       </div>
 
       {/* Referral Code */}
-      <div className="card p-6">
+      <div className="card p-4 sm:p-6">
         <h3 className="text-body-lg font-semibold text-text-500 mb-2">
           Refer a Friend
         </h3>
@@ -580,7 +581,7 @@ function RewardsTab() {
       </div>
 
       {/* Tier Info */}
-      <div className="card p-6">
+      <div className="card p-4 sm:p-6">
         <h3 className="text-body-lg font-semibold text-text-500 mb-4">
           Tier Benefits
         </h3>
@@ -621,7 +622,7 @@ function RewardsTab() {
 
 function ProfileSkeleton() {
   return (
-    <div className="card p-6 space-y-4 animate-pulse">
+    <div className="card p-4 sm:p-6 space-y-4 animate-pulse">
       <div className="h-6 bg-background-secondary rounded w-48" />
       <div className="h-10 bg-background-secondary rounded w-full max-w-lg" />
       <div className="h-10 bg-background-secondary rounded w-full max-w-lg" />

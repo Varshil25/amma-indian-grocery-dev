@@ -26,17 +26,17 @@ export default function Wishlist() {
       />
 
       <section className="section-padding">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-4 sm:px-6">
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-[320px] bg-background-secondary rounded-xl animate-pulse" />
+                <div key={i} className="aspect-[3/4] bg-background-secondary rounded-xl animate-pulse" />
               ))}
             </div>
           ) : !items?.length ? (
             <div className="text-center py-20">
               <Heart size={56} className="mx-auto text-text-100 mb-4" />
-              <h2 className="text-h4 font-semibold text-text-500 mb-2">
+              <h2 className="text-h5 font-semibold text-text-500 mb-2">
                 Your wishlist is empty
               </h2>
               <p className="text-text-300 text-body-md mb-8">
@@ -54,7 +54,7 @@ export default function Wishlist() {
               <p className="text-body-md text-text-300 mb-6">
                 {items.length} saved item{items.length !== 1 ? "s" : ""}
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
                 {items.map((item) => {
                   const price = parseFloat(item.product.price);
                   const oldPrice = item.product.compareAtPrice
@@ -70,41 +70,55 @@ export default function Wishlist() {
                   return (
                     <div
                       key={item.id}
-                      className="card p-4 flex flex-col"
+                      className="card p-3 sm:p-4 flex flex-col"
                     >
-                      {/* Image */}
-                      <Link
-                        to={`/product/${item.product.slug}`}
-                        className="relative w-full h-[180px] bg-background-secondary rounded-lg flex items-center justify-center mb-4"
-                      >
-                        {image ? (
-                          <img
-                            src={image}
-                            alt={item.product.name}
-                            className="max-h-[160px] object-contain"
-                          />
-                        ) : (
-                          <ShoppingBag size={32} className="text-text-100" />
-                        )}
-                      </Link>
+                      {/* Image, with the remove button where product cards have the heart */}
+                      <div className="relative mb-3">
+                        <Link
+                          to={`/product/${item.product.slug}`}
+                          className="w-full aspect-square bg-background-secondary rounded-lg flex items-center justify-center"
+                        >
+                          {image ? (
+                            <img
+                              src={image}
+                              alt={item.product.name}
+                              className="w-full h-full object-contain p-2 sm:p-3"
+                            />
+                          ) : (
+                            <ShoppingBag size={32} className="text-text-100" />
+                          )}
+                        </Link>
+                        <button
+                          onClick={() =>
+                            toggleWishlist.mutate({
+                              productId: item.productId,
+                              isInWishlist: true,
+                            })
+                          }
+                          aria-label={`Remove ${item.product.name} from wishlist`}
+                          className="absolute top-1.5 right-1.5 w-9 h-9 flex items-center justify-center bg-white/90 border border-text-50 rounded-full text-red-400 hover:bg-red-50 hover:text-red-500 transition"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
 
                       {/* Info */}
                       <div className="flex-1">
-                        <p className="text-body-xs text-green-500 mb-1">
+                        <p className="text-body-xs sm:text-body-sm text-green-600 mb-1 line-clamp-1">
                           {item.product.category?.name}
                         </p>
                         <Link
                           to={`/product/${item.product.slug}`}
-                          className="text-body-md font-medium text-text-500 hover:text-green-600 transition line-clamp-2"
+                          className="text-body-sm sm:text-body-md font-medium text-text-500 hover:text-green-600 transition line-clamp-2"
                         >
                           {item.product.name}
                         </Link>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-body-lg font-semibold text-text-500">
+                        <div className="flex flex-wrap items-baseline gap-x-2 mt-2">
+                          <span className="text-body-md sm:text-title font-semibold text-text-500">
                             ${price.toFixed(2)}
                           </span>
                           {oldPrice && (
-                            <span className="text-body-sm text-text-200 line-through">
+                            <span className="text-body-xs sm:text-body-sm text-text-200 line-through">
                               ${oldPrice.toFixed(2)}
                             </span>
                           )}
@@ -114,29 +128,16 @@ export default function Wishlist() {
                         )}
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex gap-2 mt-4">
-                        <button
-                          onClick={() => handleAddToCart(item.productId)}
-                          disabled={!inStock || addToCart.isPending}
-                          className="flex-1 bg-green-500 hover:bg-green-600 text-white font-medium py-2.5 rounded-lg transition text-body-sm flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                          <ShoppingBag size={16} />
-                          Add to Cart
-                        </button>
-                        <button
-                          onClick={() =>
-                            toggleWishlist.mutate({
-                              productId: item.productId,
-                              isInWishlist: true,
-                            })
-                          }
-                          aria-label={`Remove ${item.product.name} from wishlist`}
-                          className="p-2.5 border border-text-100 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-500 transition"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
+                      {/* Action */}
+                      <button
+                        onClick={() => handleAddToCart(item.productId)}
+                        disabled={!inStock || addToCart.isPending}
+                        className="mt-3 sm:mt-4 w-full h-10 bg-green-500 hover:bg-green-600 text-white font-medium px-2 rounded-lg transition text-body-sm whitespace-nowrap flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {/* the icon is dropped on the narrowest phones so the label always fits */}
+                        <ShoppingBag size={16} className="shrink-0 hidden min-[400px]:block" aria-hidden="true" />
+                        Add to Cart
+                      </button>
                     </div>
                   );
                 })}

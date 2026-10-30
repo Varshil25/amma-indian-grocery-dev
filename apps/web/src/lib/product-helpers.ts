@@ -22,6 +22,7 @@ export function mapProductToCard(p: ProductListItem) {
     price: p.price,
     compareAtPrice: p.compareAtPrice || undefined,
     avgRating: p.avgRating,
+    reviewCount: p.reviewCount ?? 0,
     imageUrl: p.images?.[0]?.url || PLACEHOLDER_IMAGE,
     isOnSale: p.isOnSale,
     inStock,

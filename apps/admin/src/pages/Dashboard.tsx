@@ -93,31 +93,31 @@ export default function Dashboard() {
   }));
 
   return (
-    <div className="space-y-6">
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Stat Cards: two per row on phones */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
             <div
               key={card.label}
-              className="bg-white rounded-xl border border-gray-200 p-5"
+              className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 min-w-0"
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-gray-500">{card.label}</span>
+              <div className="flex items-start justify-between gap-2 mb-2 sm:mb-3">
+                <span className="text-xs sm:text-sm text-gray-500">{card.label}</span>
                 <div
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center ${card.color}`}
+                  className={`w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-lg flex items-center justify-center ${card.color}`}
                 >
                   <Icon size={18} />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{card.value}</p>
               {card.change !== undefined && (
-                <div className="flex items-center gap-1 mt-1">
+                <div className="flex items-start gap-1 mt-1">
                   {card.change >= 0 ? (
-                    <TrendingUp size={14} className="text-green-500" />
+                    <TrendingUp size={14} className="text-green-500 shrink-0 mt-px" />
                   ) : (
-                    <TrendingDown size={14} className="text-red-500" />
+                    <TrendingDown size={14} className="text-red-500 shrink-0 mt-px" />
                   )}
                   <span
                     className={`text-xs font-medium ${
@@ -135,9 +135,9 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Link to="/orders" className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:border-green-300">
-          <div className="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center">
+          <div className="w-10 h-10 shrink-0 rounded-lg bg-yellow-50 flex items-center justify-center">
             <Clock size={18} className="text-yellow-600" />
           </div>
           <div>
@@ -148,7 +148,7 @@ export default function Dashboard() {
           </div>
         </Link>
         <Link to="/inventory" className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:border-green-300">
-          <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
+          <div className="w-10 h-10 shrink-0 rounded-lg bg-orange-50 flex items-center justify-center">
             <AlertTriangle size={18} className="text-orange-600" />
           </div>
           <div>
@@ -159,7 +159,7 @@ export default function Dashboard() {
           </div>
         </Link>
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+          <div className="w-10 h-10 shrink-0 rounded-lg bg-blue-50 flex items-center justify-center">
             <ShoppingCart size={18} className="text-blue-600" />
           </div>
           <div>
@@ -170,7 +170,7 @@ export default function Dashboard() {
           </div>
         </div>
         <Link to="/settings?tab=messages" className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:border-green-300">
-          <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+          <div className="w-10 h-10 shrink-0 rounded-lg bg-green-50 flex items-center justify-center">
             <MessageSquare size={18} className="text-green-600" />
           </div>
           <div>
@@ -216,7 +216,7 @@ export default function Dashboard() {
             </h3>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-cards w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="text-left px-5 py-3 text-xs font-medium text-gray-500 uppercase">
@@ -241,19 +241,19 @@ export default function Dashboard() {
                     onClick={() => navigate(`/orders?order=${order.id}`)}
                   >
                     <td className="px-5 py-3">
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-gray-900 whitespace-nowrap">
                         #{order.orderNumber}
                       </span>
                       <p className="text-xs text-gray-400">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </p>
                     </td>
-                    <td className="px-5 py-3">
+                    <td data-label="Customer" className="px-5 py-3">
                       <span className="text-gray-700">
                         {order.customerName}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
+                    <td data-label="Status" className="px-5 py-3">
                       <span
                         className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                           statusColors[order.status] || "bg-gray-100 text-gray-600"
@@ -262,7 +262,7 @@ export default function Dashboard() {
                         {order.status.replace(/_/g, " ")}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-right font-medium text-gray-900">
+                    <td data-label="Amount" className="px-5 py-3 text-right font-medium text-gray-900">
                       ${order.totalAmount.toFixed(2)}
                     </td>
                   </tr>

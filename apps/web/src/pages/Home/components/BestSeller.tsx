@@ -7,7 +7,7 @@ const BestSeller = () => {
   return (
     <ProductCarousel
       id="bestseller"
-      eyebrow="Best"
+      eyebrow="Most Popular"
       title="Best"
       highlight="Sellers"
       products={data}

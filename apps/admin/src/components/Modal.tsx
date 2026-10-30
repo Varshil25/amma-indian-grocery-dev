@@ -24,11 +24,11 @@ export default function Modal({ title, onClose, children, size = "lg" }: ModalPr
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] ${widths[size]} bg-white rounded-2xl p-6 z-[90] shadow-2xl max-h-[90vh] overflow-y-auto`}
+        className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-1.5rem)] sm:w-[calc(100%-2rem)] ${widths[size]} bg-white rounded-2xl p-4 sm:p-6 z-[90] shadow-2xl max-h-[90dvh] overflow-y-auto overscroll-contain`}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between gap-3 mb-4">
           <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
+          <button type="button" onClick={onClose} className="p-2 -mr-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-50" aria-label="Close">
             <X size={18} />
           </button>
         </div>

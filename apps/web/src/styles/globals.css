@@ -3,13 +3,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ----------- GLOBAL BASE RESET ----------- */
+/* ----------- GLOBAL BASE ----------- */
 html {
   scroll-behavior: smooth;
+  /* stop phones from enlarging text on their own when rotated */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
-  @apply bg-white text-text-900 font-poppins;
+  @apply bg-white text-text-900 font-poppins antialiased;
+}
+
+/* Form fields inside a flex row may shrink instead of pushing the row wider than the screen */
+input,
+select,
+textarea {
+  min-width: 0;
 }
 
 /* Skip to content — accessibility */
@@ -22,8 +32,8 @@ body {
   top: 0;
 }
 
-/* Global focus-visible for keyboard accessibility */
 @layer base {
+  /* Global focus-visible for keyboard accessibility */
   a:focus-visible,
   button:focus-visible,
   input:focus-visible,
@@ -31,9 +41,29 @@ body {
   textarea:focus-visible {
     @apply outline-none ring-2 ring-green-500 ring-offset-2;
   }
+
+  /* Big headings break into even lines instead of leaving one word on the last line */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
 }
 
-/* ----------- DESIGN SYSTEM TOKENS ----------- */
+/* iPhones zoom the page in when a field with text smaller than 16px is tapped; keep every field
+   at 16px on small screens so that never happens. (Outside any layer, and specific enough to win
+   over text-sm and friends.) */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select:not([hidden]),
+  textarea:not([hidden]) {
+    font-size: 16px;
+  }
+}
+
+/* ----------- DESIGN SYSTEM TOKENS -----------
+   Font sizes live in tailwind.config.ts (text-h1 … text-h6, text-body-lg … text-body-xs) and
+   scale from phone to desktop by themselves, so components don't need per-breakpoint sizes. */
 @layer utilities {
   /* Typography — Headings */
   .heading-1 {
@@ -57,13 +87,13 @@ body {
 
   /* Body Text */
   .body-lg {
-    @apply text-body font-normal text-text-600;
+    @apply text-body-lg font-normal text-text-600;
   }
   .body-md {
-    @apply text-body1 font-normal text-text-600;
+    @apply text-body-md font-normal text-text-600;
   }
   .body-sm {
-    @apply text-body2 font-normal text-text-600;
+    @apply text-body-sm font-normal text-text-600;
   }
 
   /* Titles */
@@ -82,17 +112,17 @@ body {
     @apply text-label text-text-500 uppercase;
   }
 
-  /* Buttons */
+  /* Buttons — at least 44px tall so they are easy to tap */
   .btn-primary {
-    @apply bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition;
+    @apply inline-flex items-center justify-center gap-2 min-h-[44px] bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition;
   }
 
   .btn-outline {
-    @apply border border-green-500 text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-50 transition;
+    @apply inline-flex items-center justify-center gap-2 min-h-[44px] border border-green-500 text-green-600 px-6 py-3 rounded-lg font-medium hover:bg-green-50 transition;
   }
 
   .btn-yellow {
-    @apply bg-yellow-500 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition;
+    @apply inline-flex items-center justify-center gap-2 min-h-[44px] bg-yellow-500 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition;
   }
 
   /* Component Utilities */
@@ -121,11 +151,12 @@ body {
   }
 
   .input-label {
-    @apply block text-text-400 text-caption font-medium mb-2;
+    @apply block text-text-400 text-body-sm font-medium mb-2;
   }
 
+  /* Vertical spacing for page sections: tighter on phones */
   .section-padding {
-    @apply py-16 md:py-20;
+    @apply py-12 md:py-16 lg:py-20;
   }
 
   /* Focus styles for accessibility */
@@ -158,3 +189,13 @@ body {
   animation: slide-in-right 0.3s ease-out;
 }
 
+/* People who turn off motion in their device settings get a still page */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .floating,
+  .animate-slide-in-right {
+    animation: none;
+  }
+}

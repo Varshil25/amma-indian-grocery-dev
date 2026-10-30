@@ -60,19 +60,19 @@ const HotDeals: React.FC = () => {
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Hot Deals" }]}
       />
 
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12">
         {deals && deals.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 md:mb-10">
             {deals.map((d) => (
-              <div key={d.id} className="relative overflow-hidden rounded-2xl bg-green-50 border border-green-100 p-5 flex gap-4 items-center">
-                {d.bannerImage && <img src={d.bannerImage} alt="" className="w-20 h-20 object-contain rounded-xl bg-white shrink-0" />}
+              <div key={d.id} className="relative overflow-hidden rounded-2xl bg-green-50 border border-green-100 p-4 sm:p-5 flex gap-4 items-center">
+                {d.bannerImage && <img src={d.bannerImage} alt="" className="w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-xl bg-white shrink-0" />}
                 <div className="min-w-0">
-                  <p className="text-green-700 text-sm font-semibold flex items-center gap-1">
+                  <p className="text-green-700 text-body-sm font-semibold flex items-center gap-1">
                     <Flame size={14} /> {dealLabel(d)}
                   </p>
-                  <h3 className="text-lg font-semibold text-text-500">{d.name}</h3>
-                  {d.description && <p className="text-text-300 text-sm line-clamp-2">{d.description}</p>}
-                  <p className="text-xs text-text-200 mt-1">
+                  <h3 className="text-title font-semibold text-text-500">{d.name}</h3>
+                  {d.description && <p className="text-text-300 text-body-sm line-clamp-2">{d.description}</p>}
+                  <p className="text-body-xs text-text-200 mt-1">
                     {d.productCount} item{d.productCount === 1 ? "" : "s"} · ends {new Date(d.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                   </p>
                 </div>
@@ -80,9 +80,9 @@ const HotDeals: React.FC = () => {
             ))}
           </div>
         )}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-          <div>
-            <h2 className="text-h4 md:text-h3 font-semibold text-text-500">
+        <div className="flex flex-wrap justify-between items-end gap-4 mb-6 md:mb-8">
+          <div className="min-w-0">
+            <h2 className="text-h5 font-semibold text-text-500">
               On Sale Now
             </h2>
             {data?.pagination && (
@@ -92,7 +92,8 @@ const HotDeals: React.FC = () => {
 
           <div className="relative">
             <select
-              className="appearance-none border border-text-100 rounded-full px-6 py-2 text-text-300 bg-white cursor-pointer pr-10"
+              aria-label="Sort deals"
+              className="appearance-none h-10 border border-text-100 rounded-full pl-4 pr-10 text-body-sm text-text-400 bg-white cursor-pointer"
               value={sort}
               onChange={(e) => handleSortChange(e.target.value)}
             >
@@ -105,11 +106,9 @@ const HotDeals: React.FC = () => {
         </div>
 
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5 lg:gap-6">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="flex justify-center">
-                <div className="w-[280px] h-[380px] bg-background-secondary rounded-lg animate-pulse" />
-              </div>
+              <div key={i} className="aspect-[3/4] bg-background-secondary rounded-xl animate-pulse" />
             ))}
           </div>
         )}
@@ -130,11 +129,9 @@ const HotDeals: React.FC = () => {
                 <p className="text-text-300 text-body-lg">No deals available right now. Check back soon!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-10">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5 lg:gap-6">
                 {data.products.map((product) => (
-                  <div key={product.id} className="flex justify-center items-stretch transition-transform duration-200 hover:-translate-y-2">
-                    <ProductCard {...mapProductToCard(product)} />
-                  </div>
+                  <ProductCard key={product.id} {...mapProductToCard(product)} />
                 ))}
               </div>
             )}

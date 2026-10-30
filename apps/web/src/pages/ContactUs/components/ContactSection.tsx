@@ -22,7 +22,7 @@ function validate(f: FormState): Partial<Record<Field, string>> {
 }
 
 const inputClass = (hasError: boolean) =>
-  `w-full h-12 border rounded-lg px-4 text-base shadow-sm focus:outline-none focus:border-green-500 transition ${
+  `w-full h-12 border rounded-lg px-4 text-body-md shadow-sm focus:outline-none focus:border-green-500 transition ${
     hasError ? "border-red-400" : "border-text-100"
   }`;
 
@@ -94,7 +94,7 @@ const ContactSection = () => {
 
   const errorText = (field: Field) =>
     errors[field] ? (
-      <p id={`contact-${field}-error`} className="text-red-500 text-sm mt-1.5">
+      <p id={`contact-${field}-error`} className="text-red-500 text-body-sm mt-1.5">
         {errors[field]}
       </p>
     ) : null;
@@ -112,7 +112,7 @@ const ContactSection = () => {
 
   return (
     <section className="w-full bg-white py-10 sm:py-14 lg:py-20">
-      <div className="container mx-auto px-6 max-w-[1200px]">
+      <div className="container mx-auto px-4 sm:px-6 max-w-[1200px]">
 
         {/* MAP */}
         {mapEmbed && (
@@ -132,10 +132,10 @@ const ContactSection = () => {
 
         {/* TITLE + SUBTEXT */}
         <div className="text-center max-w-[750px] mx-auto">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight">
+          <h2 className="text-h3 font-semibold text-text-500">
             CONTACT <span className="text-green-500">INFO</span>
           </h2>
-          <p className="text-base sm:text-lg mt-3 sm:mt-4 text-text-400">
+          <p className="text-body-lg mt-3 sm:mt-4 text-text-400">
             Questions about an order, a product you can't find, or feedback for us? Send a message
             and we'll get back to you.
           </p>
@@ -147,10 +147,10 @@ const ContactSection = () => {
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-1 lg:content-start">
             {hours.length > 0 && (
               <div>
-                <h3 className="text-xl sm:text-2xl font-semibold mb-4">Store Hours</h3>
+                <h3 className="text-h6 font-semibold text-text-500 mb-4">Store Hours</h3>
                 <dl className="space-y-3">
                   {hours.map((item, idx) => (
-                    <div key={idx} className="flex justify-between gap-4 text-base text-text-500">
+                    <div key={idx} className="flex justify-between gap-4 text-body-md text-text-500">
                       <dt>{item.day}</dt>
                       <dd className={`text-right ${item.time.toLowerCase().includes("closed") ? "text-red-500" : ""}`}>
                         {item.time}
@@ -162,9 +162,9 @@ const ContactSection = () => {
             )}
 
             <div>
-              <h3 className="text-xl sm:text-2xl font-semibold mb-3">{storeName}</h3>
+              <h3 className="text-h6 font-semibold text-text-500 mb-3">{storeName}</h3>
               {hasDetails && (
-                <ul className="space-y-1 text-base text-text-500">
+                <ul className="space-y-1 text-body-md text-text-500">
                   {storeAddress && (
                     <li>
                       <a
@@ -176,7 +176,7 @@ const ContactSection = () => {
                         <MapPin size={20} className="text-green-500 shrink-0 mt-0.5" aria-hidden />
                         <span>
                           {storeAddress}
-                          <span className="block text-sm text-green-600 group-hover:underline">Get directions</span>
+                          <span className="block text-body-sm text-green-600 group-hover:underline">Get directions</span>
                         </span>
                       </a>
                     </li>
@@ -214,7 +214,7 @@ const ContactSection = () => {
 
             <div className="grid sm:grid-cols-2 gap-5 sm:gap-6">
               <div>
-                <label htmlFor="contact-name" className="block text-text-400 text-sm sm:text-base mb-2">
+                <label htmlFor="contact-name" className="block text-text-400 text-body-sm sm:text-body-md mb-2">
                   Name
                 </label>
                 <input
@@ -229,7 +229,7 @@ const ContactSection = () => {
               </div>
 
               <div>
-                <label htmlFor="contact-phone" className="block text-text-400 text-sm sm:text-base mb-2">
+                <label htmlFor="contact-phone" className="block text-text-400 text-body-sm sm:text-body-md mb-2">
                   Phone <span className="text-text-200">(optional)</span>
                 </label>
                 <input
@@ -248,7 +248,7 @@ const ContactSection = () => {
 
             <div className="grid sm:grid-cols-2 gap-5 sm:gap-6">
               <div>
-                <label htmlFor="contact-email" className="block text-text-400 text-sm sm:text-base mb-2">
+                <label htmlFor="contact-email" className="block text-text-400 text-body-sm sm:text-body-md mb-2">
                   Email
                 </label>
                 <input
@@ -264,7 +264,7 @@ const ContactSection = () => {
               </div>
 
               <div>
-                <label htmlFor="contact-subject" className="block text-text-400 text-sm sm:text-base mb-2">
+                <label htmlFor="contact-subject" className="block text-text-400 text-body-sm sm:text-body-md mb-2">
                   Subject <span className="text-text-200">(optional)</span>
                 </label>
                 <input
@@ -279,13 +279,13 @@ const ContactSection = () => {
             </div>
 
             <div>
-              <label htmlFor="contact-message" className="block text-text-400 text-sm sm:text-base mb-2">
+              <label htmlFor="contact-message" className="block text-text-400 text-body-sm sm:text-body-md mb-2">
                 Message
               </label>
               <textarea
                 maxLength={MAX.message}
                 placeholder="Write your message..."
-                className={`w-full min-h-[140px] sm:min-h-[160px] resize-y border rounded-xl p-4 text-base shadow-sm focus:outline-none focus:border-green-500 transition ${
+                className={`w-full min-h-[140px] sm:min-h-[160px] resize-y border rounded-xl p-4 text-body-md shadow-sm focus:outline-none focus:border-green-500 transition ${
                   errors.message ? "border-red-400" : "border-text-100"
                 }`}
                 {...fieldProps("message")}
@@ -296,7 +296,7 @@ const ContactSection = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full h-14 bg-background-secondary border border-green-600 text-green-600 rounded-xl font-medium hover:bg-green-500 hover:text-white transition text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full h-14 bg-background-secondary border border-green-600 text-green-600 rounded-xl font-medium hover:bg-green-500 hover:text-white transition text-body-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>

@@ -20,21 +20,21 @@ const CTA: React.FC<CTAProps> = ({
   secondaryLink
 }) => {
   return (
-    <section className="w-full bg-green-500 py-12 md:py-16 mx-auto mt-12 shadow-md text-center select-none">
-      <div className="container mx-auto px-4 flex flex-col items-center justify-center">
-        <h2 className="text-h4 md:text-h2 font-semibold text-white mb-4">{title}</h2>
-        <p className="text-body-lg md:text-body-xl text-green-50 mb-8 max-w-2xl">{description}</p>
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-center">
+    <section className="w-full bg-green-500 py-12 md:py-16 mx-auto shadow-md text-center">
+      <div className="container mx-auto px-4 sm:px-6 flex flex-col items-center justify-center">
+        <h2 className="text-h2 font-semibold text-white mb-3 md:mb-4">{title}</h2>
+        <p className="text-body-lg text-green-50 mb-6 md:mb-8 max-w-2xl">{description}</p>
+        <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
           <Link
             to={buttonLink}
-            className="bg-white text-green-600 font-semibold px-8 py-3 rounded-lg hover:bg-yellow-600 hover:text-white transition-all shadow focus:outline-none focus:ring-2 focus:ring-green-300"
+            className="inline-flex items-center justify-center min-h-[48px] bg-white text-green-600 text-body-md font-semibold px-8 py-3 rounded-lg hover:bg-yellow-600 hover:text-white transition-all shadow focus:outline-none focus:ring-2 focus:ring-green-300"
           >
             {buttonText}
           </Link>
           {secondaryText && secondaryLink && (
             <Link
               to={secondaryLink}
-              className="text-white underline hover:text-yellow-300 transition mt-2 md:mt-0"
+              className="text-body-md text-white underline hover:text-yellow-300 transition"
             >
               {secondaryText}
             </Link>

@@ -154,7 +154,7 @@ export default function Deals() {
           <p className="px-4 py-12 text-center text-red-600 text-sm">{errorMessage(error, "Couldn't load deals")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-cards w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Deal</th>
@@ -179,30 +179,30 @@ export default function Deals() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-700">
+                      <td data-label="Discount" className="px-4 py-3 text-gray-700">
                         {deal.discountType === "PERCENTAGE"
                           ? `${deal.discountValue}% off`
                           : deal.discountType === "FREE_SHIPPING"
                             ? "Free delivery"
                             : `${money(deal.discountValue)} off`}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td data-label="Products" className="px-4 py-3 text-center">
                         <span className="inline-flex items-center gap-1 text-xs font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
                           {deal.productCount} items
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                      <td data-label="Runs" className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
                         {new Date(deal.startDate).toLocaleDateString()} – {new Date(deal.endDate).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td data-label="Status" className="px-4 py-3 text-center">
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${st.cls}`}>{st.label}</span>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td data-actions className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => openEdit(deal)} className="text-blue-500 hover:text-blue-600 p-1" aria-label={`Edit ${deal.name}`}>
+                          <button onClick={() => openEdit(deal)} className="text-blue-500 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100 transition" aria-label={`Edit ${deal.name}`}>
                             <Pencil size={15} />
                           </button>
-                          <button onClick={() => handleDelete(deal)} className="text-red-500 hover:text-red-600 p-1" aria-label={`Delete ${deal.name}`}>
+                          <button onClick={() => handleDelete(deal)} className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-gray-100 transition" aria-label={`Delete ${deal.name}`}>
                             <Trash2 size={15} />
                           </button>
                         </div>

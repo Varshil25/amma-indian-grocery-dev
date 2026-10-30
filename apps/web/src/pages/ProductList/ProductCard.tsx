@@ -1,5 +1,5 @@
 import React from "react";
-import { Heart } from "lucide-react";
+import { Heart, Plus, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAddToCart } from "../../hooks/use-cart";
 import { useToggleWishlist, useWishlistIds } from "../../hooks/use-wishlist";
@@ -20,6 +20,7 @@ interface ProductProps {
   compareAtPrice?: string;
   rating?: number;
   avgRating?: string;
+  reviewCount?: number;
   img?: string;
   imageUrl?: string;
   discount?: string;
@@ -27,6 +28,11 @@ interface ProductProps {
   inStock?: boolean;
 }
 
+/**
+ * The one product card used everywhere (category pages, Hot Deals, related products and the home
+ * page carousels). It fills the width it is given, so the grid or carousel decides how many fit:
+ * two side by side on a phone, up to five on a wide screen.
+ */
 const ProductCard: React.FC<ProductProps> = ({
   id,
   slug,
@@ -39,10 +45,10 @@ const ProductCard: React.FC<ProductProps> = ({
   compareAtPrice,
   rating,
   avgRating,
+  reviewCount = 0,
   img,
   imageUrl,
   discount,
-  isOnSale,
   inStock = true,
 }) => {
   const productId = (id || "") as string;
@@ -56,94 +62,105 @@ const ProductCard: React.FC<ProductProps> = ({
 
   const displayPrice = price.startsWith("$") ? price : `$${parseFloat(price).toFixed(2)}`;
   const displayOldPrice = oldPrice || compareAtPrice;
-  const formattedOldPrice = displayOldPrice
+  let formattedOldPrice = displayOldPrice
     ? displayOldPrice.startsWith("$")
       ? displayOldPrice
       : `$${parseFloat(displayOldPrice).toFixed(2)}`
     : null;
   const displayImage = img || imageUrl || PLACEHOLDER_IMAGE;
   const productLink = slug ? `/product/${slug}` : `/product/${id}`;
+  const stars = rating ?? (parseFloat(avgRating || "") || 0);
 
-  // Calculate discount badge
+  // Discount badge, only when the old price really is higher
   let discountBadge = discount;
-  if (!discountBadge && formattedOldPrice && displayPrice) {
+  if (formattedOldPrice) {
     const priceParsed = parseFloat(displayPrice.replace("$", ""));
     const oldPriceParsed = parseFloat(formattedOldPrice.replace("$", ""));
     if (oldPriceParsed > priceParsed) {
-      const pct = Math.round(((oldPriceParsed - priceParsed) / oldPriceParsed) * 100);
-      discountBadge = `${pct}%`;
+      if (!discountBadge) discountBadge = `${Math.round(((oldPriceParsed - priceParsed) / oldPriceParsed) * 100)}% off`;
+    } else {
+      formattedOldPrice = null;
     }
   }
 
   return (
     <Link
       to={productLink}
-      className="w-[280px] bg-white border border-[#e9e9e9] rounded-lg px-4 py-5 flex flex-col gap-4 cursor-pointer hover:shadow-md transition text-inherit no-underline"
-      tabIndex={0}
+      className="group h-full w-full bg-white border border-text-50 rounded-xl p-3 sm:p-4 flex flex-col gap-3 hover:shadow-card-hover transition text-inherit no-underline"
     >
-      <div className="relative flex justify-center">
-        {discountBadge && inStock && (
-          <span className="absolute top-2 left-2 text-[10px] bg-green-600 text-white rounded-full px-3 py-1">
-            {discountBadge}
-          </span>
-        )}
-        {!inStock && (
-          <span className="absolute top-2 left-2 text-[10px] bg-red-500 text-white rounded-full px-3 py-1">
-            Out of Stock
-          </span>
-        )}
+      {/* Image, with the badge and wishlist button on top of it */}
+      <div className="relative aspect-square rounded-lg bg-background-secondary/60 flex items-center justify-center overflow-hidden">
         <img
           src={displayImage}
-          className="w-[150px] h-[150px] object-contain"
+          className="w-full h-full object-contain p-2 sm:p-3 transition-transform duration-300 group-hover:scale-105"
           alt={name}
           loading="lazy"
           onError={(e) => {
             if (!e.currentTarget.src.endsWith("placeholder.svg")) e.currentTarget.src = PLACEHOLDER_IMAGE;
           }}
         />
+        {!inStock ? (
+          <span className="absolute top-2 left-2 text-body-xs font-medium bg-red-500 text-white rounded-full px-2.5 py-0.5">
+            Out of stock
+          </span>
+        ) : discountBadge ? (
+          <span className="absolute top-2 left-2 text-body-xs font-medium bg-green-600 text-white rounded-full px-2.5 py-0.5">
+            {discountBadge}
+          </span>
+        ) : null}
         <button
           type="button"
           aria-label={isInWishlist ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
+          aria-pressed={isInWishlist}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             if (!isAuthenticated) return requireLogin("Sign in to save items to your wishlist");
             toggleWishlist.mutate({ productId, isInWishlist });
           }}
-          className={`absolute top-2 right-2 border rounded-full p-2 transition cursor-pointer ${
+          className={`absolute top-1.5 right-1.5 w-9 h-9 rounded-full border flex items-center justify-center transition ${
             isInWishlist
               ? "bg-red-50 border-red-300"
-              : "border-text-100 hover:bg-red-50 hover:border-red-300"
+              : "bg-white/90 border-text-50 hover:bg-red-50 hover:border-red-300"
           }`}
         >
           <Heart
             size={18}
-            className={`transition ${
-              isInWishlist ? "text-red-500 fill-red-500" : "text-text-300 hover:text-red-500"
-            }`}
+            className={isInWishlist ? "text-red-500 fill-red-500" : "text-text-300"}
           />
         </button>
       </div>
 
-      <div>
-        {category && <p className="text-green-500 text-sm font-normal">{category}</p>}
-        <h3 className="text-lg font-medium text-black">{name}</h3>
-        {(weight || unit) && (
-          <p className="text-sm text-text-200">{weight || unit}</p>
+      {/* Name and details */}
+      <div className="flex-1 min-w-0">
+        {(category || reviewCount > 0) && (
+          <div className="flex items-center justify-between gap-2">
+            {category && <p className="text-body-xs sm:text-body-sm text-green-600 line-clamp-1">{category}</p>}
+            {reviewCount > 0 && (
+              <span className="shrink-0 inline-flex items-center gap-1 text-body-xs sm:text-body-sm font-medium text-text-400">
+                <Star size={14} className="text-yellow-500 fill-yellow-500" aria-hidden="true" />
+                {stars.toFixed(1)}
+              </span>
+            )}
+          </div>
         )}
+        <h3 className="mt-1 text-body-sm sm:text-body-md font-medium text-text-500 line-clamp-2 group-hover:text-green-600 transition">
+          {name}
+        </h3>
+        {(weight || unit) && <p className="text-body-xs sm:text-body-sm text-text-200 mt-0.5">{weight || unit}</p>}
       </div>
 
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-medium text-black">{displayPrice}</span>
+      {/* Price and add button: stacked on narrow phone cards, side by side from 640px */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-baseline flex-wrap gap-x-1.5">
+          <span className="text-body-md sm:text-title font-semibold text-text-500">{displayPrice}</span>
           {formattedOldPrice && (
-            <span className="text-text-100 line-through">{formattedOldPrice}</span>
+            <span className="text-body-xs sm:text-body-sm text-text-200 line-through">{formattedOldPrice}</span>
           )}
         </div>
 
         <button
           type="button"
-          tabIndex={-1}
           aria-label={`Add ${name} to cart`}
           onClick={(e) => {
             e.preventDefault();
@@ -153,9 +170,17 @@ const ProductCard: React.FC<ProductProps> = ({
             addToCart.mutate({ productId }, { onSuccess: () => openDrawer() });
           }}
           disabled={!inStock || addToCart.isPending}
-          className="bg-green-50 text-green-500 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-green-500 hover:text-white transition select-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="h-10 w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-1 rounded-full bg-green-50 text-green-600 px-4 text-body-sm font-medium hover:bg-green-500 hover:text-white transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-50 disabled:hover:text-green-600"
         >
-          {!inStock ? "Sold out" : addToCart.isPending ? "..." : "Add"}
+          {!inStock ? (
+            "Sold out"
+          ) : addToCart.isPending ? (
+            "Adding…"
+          ) : (
+            <>
+              <Plus size={16} aria-hidden="true" /> Add
+            </>
+          )}
         </button>
       </div>
     </Link>

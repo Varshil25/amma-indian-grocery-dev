@@ -1,5 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 
+/** A font size that grows smoothly from `min` px on a 375px phone to `max` px on a 1280px+ screen. */
+const fluid = (min: number, max: number) => {
+  const slope = (max - min) / (1280 - 375);
+  const base = min - slope * 375;
+  const rem = (px: number) => `${+(px / 16).toFixed(4)}rem`;
+  return `clamp(${rem(min)}, ${rem(base)} + ${+(slope * 100).toFixed(4)}vw, ${rem(max)})`;
+};
+
 export default {
 	content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   
@@ -66,23 +74,42 @@ export default {
 		  poppins: ["Poppins", "sans-serif"],
 		},
   
+		// One type scale for the whole store. Headings are fluid: each size grows smoothly from
+		// its phone size (375px screen) to its desktop size (1280px and wider), so the same class
+		// works on every screen. Where each size is used:
+		//   h1  home hero headline                      34 → 56px
+		//   h2  promo banners / call-to-action titles    30 → 52px
+		//   h3  page titles and section titles           28 → 48px
+		//   h4  auth & confirmation titles               24 → 40px
+		//   h5  empty-state and listing titles           22 → 36px
+		//   h6  card / panel headings                    20 → 24px
+		//   body-lg  intro & lead paragraphs             16 → 18px
+		//   body-md  normal text                         16px
+		//   body-sm  secondary text, form hints/errors   14px
+		//   body-xs  meta (dates, badges, small print)   12px
 		fontSize: {
-		  h1: ["56px", { lineHeight: "130%" }],
-		  h2: ["52px", { lineHeight: "130%" }],
-		  h3: ["48px", { lineHeight: "130%" }],
-		  h4: ["40px", { lineHeight: "130%" }],
-		  h5: ["36px", { lineHeight: "130%" }],
-		  h6: ["32px", { lineHeight: "130%" }],
-  
-		  body: ["28px", { lineHeight: "130%" }],
-		  body1: ["26px", { lineHeight: "130%" }],
-		  body2: ["24px", { lineHeight: "130%" }],
-  
-		  title: ["20px", { lineHeight: "130%" }],
-		  smtitle: ["18px", { lineHeight: "130%" }],
-  
-		  caption: ["16px", { lineHeight: "150%" }],
-		  label: ["14px", { lineHeight: "150%" }],
+		  h1: [fluid(34, 56), { lineHeight: "1.15" }],
+		  h2: [fluid(30, 52), { lineHeight: "1.15" }],
+		  h3: [fluid(28, 48), { lineHeight: "1.2" }],
+		  h4: [fluid(24, 40), { lineHeight: "1.25" }],
+		  h5: [fluid(22, 36), { lineHeight: "1.25" }],
+		  h6: [fluid(20, 24), { lineHeight: "1.3" }],
+
+		  body: [fluid(18, 28), { lineHeight: "1.4" }],
+		  body1: [fluid(18, 26), { lineHeight: "1.4" }],
+		  body2: [fluid(18, 24), { lineHeight: "1.4" }],
+
+		  "body-xl": [fluid(18, 20), { lineHeight: "1.6" }],
+		  "body-lg": [fluid(16, 18), { lineHeight: "1.6" }],
+		  "body-md": ["16px", { lineHeight: "1.5" }],
+		  "body-sm": ["14px", { lineHeight: "1.5" }],
+		  "body-xs": ["12px", { lineHeight: "1.5" }],
+
+		  title: [fluid(18, 20), { lineHeight: "1.3" }],
+		  smtitle: [fluid(16, 18), { lineHeight: "1.3" }],
+
+		  caption: ["16px", { lineHeight: "1.5" }],
+		  label: ["14px", { lineHeight: "1.5" }],
 		},
 
 		borderRadius: {

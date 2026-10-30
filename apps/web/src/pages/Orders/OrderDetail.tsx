@@ -51,7 +51,7 @@ export default function OrderDetail() {
     return (
       <>
         <PageHeader title="Order Details" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Orders", href: "/orders" }, { label: "Details" }]} />
-        <div className="container mx-auto px-6 py-20 flex justify-center">
+        <div className="container mx-auto px-4 sm:px-6 py-20 flex justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-green-500" />
         </div>
       </>
@@ -62,7 +62,7 @@ export default function OrderDetail() {
     return (
       <>
         <PageHeader title="Order Not Found" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Orders", href: "/orders" }, { label: "Not Found" }]} />
-        <div className="container mx-auto px-6 py-20 text-center">
+        <div className="container mx-auto px-4 sm:px-6 py-20 text-center">
           <Package size={48} className="mx-auto text-text-100 mb-4" />
           <p className="text-text-300 text-body-lg mb-4">Order not found</p>
           <Link to="/orders" className="btn-primary inline-block">
@@ -88,7 +88,7 @@ export default function OrderDetail() {
         ]}
       />
 
-      <div className="container mx-auto px-6 py-10">
+      <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12">
         {/* Back link */}
         <Link
           to="/orders"
@@ -97,11 +97,11 @@ export default function OrderDetail() {
           <ArrowLeft size={16} /> Back to Orders
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Status Header */}
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${config.color} bg-opacity-10`}>
@@ -153,7 +153,7 @@ export default function OrderDetail() {
 
             {/* Status Timeline */}
             {order.statusHistory.length > 0 && (
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <h3 className="text-h6 font-semibold text-text-500 mb-4">Order Timeline</h3>
                 <div className="space-y-0">
                   {order.statusHistory.map((entry, idx) => {
@@ -193,7 +193,7 @@ export default function OrderDetail() {
             )}
 
             {/* Items */}
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6">
               <h3 className="text-h6 font-semibold text-text-500 mb-4">
                 Items ({order.items.length})
               </h3>
@@ -217,7 +217,7 @@ export default function OrderDetail() {
                     <div className="flex-1 min-w-0">
                       <Link
                         to={item.productSlug ? `/product/${item.productSlug}` : "#"}
-                        className="text-body-sm font-medium text-text-500 hover:text-green-600 transition line-clamp-1"
+                        className="text-body-sm font-medium text-text-500 hover:text-green-600 transition line-clamp-2"
                       >
                         {item.productName}
                       </Link>
@@ -237,7 +237,7 @@ export default function OrderDetail() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Payment Summary */}
-            <div className="card p-6">
+            <div className="card p-4 sm:p-6">
               <h3 className="text-h6 font-semibold text-text-500 mb-4">Payment Summary</h3>
               <div className="space-y-2 text-body-sm">
                 <div className="flex justify-between">
@@ -274,7 +274,7 @@ export default function OrderDetail() {
                 </div>
                 <div className="border-t border-text-50 pt-2 flex justify-between">
                   <span className="font-semibold text-text-500">Total</span>
-                  <span className="text-h5 font-bold text-green-600">
+                  <span className="text-h6 font-bold text-green-600">
                     ${order.totalAmount.toFixed(2)}
                   </span>
                 </div>
@@ -297,7 +297,7 @@ export default function OrderDetail() {
 
             {/* Delivery Address */}
             {order.address && (
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <h3 className="text-h6 font-semibold text-text-500 mb-3 flex items-center gap-2">
                   <MapPin size={16} /> Delivery Address
                 </h3>
@@ -317,7 +317,7 @@ export default function OrderDetail() {
 
             {/* Order Notes */}
             {order.notes && (
-              <div className="card p-6">
+              <div className="card p-4 sm:p-6">
                 <h3 className="text-h6 font-semibold text-text-500 mb-2">Notes</h3>
                 <p className="text-body-sm text-text-300">{order.notes}</p>
               </div>
@@ -334,7 +334,7 @@ export default function OrderDetail() {
             onClick={() => setShowCancelModal(false)}
           />
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl p-6 z-[90] shadow-2xl">
-            <h3 className="text-h5 font-semibold text-text-500 mb-2">
+            <h3 className="text-h6 font-semibold text-text-500 mb-2">
               Cancel Order
             </h3>
             <p className="text-body-sm text-text-200 mb-4">

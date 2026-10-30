@@ -53,7 +53,7 @@ const Navbar = () => {
 
   return (
     <header className="w-full bg-white shadow-sm fixed top-0 left-0 z-50">
-      <div className="container mx-auto flex items-center justify-between gap-4 py-3 px-6">
+      <div className="container mx-auto flex items-center justify-between gap-4 py-3 px-4 sm:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center shrink-0" aria-label="Amma Grocery home">
           <img src={navbarLogo} className="w-12 h-auto" alt="Amma Grocery" />
@@ -219,20 +219,23 @@ const Navbar = () => {
 
       {/* Mobile/Tablet Dropdown */}
       <div
-        className={`lg:hidden bg-white w-full border-t transition-all duration-300 ease-out overflow-hidden fixed top-16 left-0 right-0 z-40 ${
-          open ? "opacity-100 max-h-screen" : "opacity-0 max-h-0 -translate-y-4"
+        className={`lg:hidden bg-white w-full border-t shadow-md transition-all duration-300 ease-out overflow-y-auto overscroll-contain absolute top-full left-0 right-0 z-40 ${
+          open ? "opacity-100 max-h-[calc(100dvh-72px)]" : "opacity-0 max-h-0 -translate-y-4 pointer-events-none"
         }`}
       >
-        <div className="container mx-auto px-4 py-4 space-y-4">
-          <SearchBar onClose={() => setOpen(false)} />
+        <div className="container mx-auto px-4 sm:px-6 py-4 space-y-1">
+          <div className="pb-3">
+            <SearchBar onClose={() => setOpen(false)} />
+          </div>
           {navItems.map((item, i) => (
             <Link
               key={i}
               to={item.path}
               onClick={() => setOpen(false)}
-              className={`flex items-center gap-3 text-caption transition ${
+              aria-current={pathname === item.path ? "page" : undefined}
+              className={`flex items-center gap-3 min-h-[44px] text-body-md transition ${
                 pathname === item.path
-                  ? "text-green-500 font-normal"
+                  ? "text-green-500 font-medium"
                   : "text-text-900 hover:text-green-500"
               }`}
             >
@@ -243,7 +246,7 @@ const Navbar = () => {
           <Link
             to="/all-categories"
             onClick={() => setOpen(false)}
-            className="bg-green-500 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-green-600 transition"
+            className="my-2 bg-green-500 text-white text-body-md font-medium px-5 min-h-[48px] rounded-lg flex items-center gap-2 hover:bg-green-600 transition"
           >
             <MdViewModule className="w-5 h-5" />
             <span>All Categories</span>
@@ -253,7 +256,7 @@ const Navbar = () => {
           <Link
             to="/wishlist"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-3 text-caption text-text-500 hover:text-red-500 transition"
+            className="flex items-center gap-3 min-h-[44px] text-body-md text-text-500 hover:text-red-500 transition"
           >
             <Heart className="w-5 h-5" />
             Wishlist
@@ -263,7 +266,7 @@ const Navbar = () => {
               setOpen(false);
               openDrawer();
             }}
-            className="flex items-center gap-3 text-caption text-text-500 hover:text-green-500 transition"
+            className="flex items-center gap-3 min-h-[44px] w-full text-left text-body-md text-text-500 hover:text-green-500 transition"
           >
             <ShoppingBag className="w-5 h-5" />
             Cart {cartCount > 0 && `(${cartCount})`}
@@ -275,7 +278,7 @@ const Navbar = () => {
               <Link
                 to="/profile"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 text-caption text-text-500 hover:text-green-500 transition"
+                className="flex items-center gap-3 min-h-[44px] w-full text-left text-body-md text-text-500 hover:text-green-500 transition"
               >
                 <User className="w-5 h-5" />
                 My Account
@@ -283,7 +286,7 @@ const Navbar = () => {
               <Link
                 to="/rewards"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 text-caption text-text-500 hover:text-green-500 transition"
+                className="flex items-center gap-3 min-h-[44px] w-full text-left text-body-md text-text-500 hover:text-green-500 transition"
               >
                 <Gift className="w-5 h-5" />
                 Rewards & Referrals
@@ -293,7 +296,7 @@ const Navbar = () => {
                   setOpen(false);
                   logoutMutation.mutate();
                 }}
-                className="flex items-center gap-3 text-caption text-red-500 hover:text-red-600 transition"
+                className="flex items-center gap-3 min-h-[44px] w-full text-left text-body-md text-red-500 hover:text-red-600 transition"
               >
                 <LogOut className="w-5 h-5" />
                 Log Out
@@ -303,7 +306,7 @@ const Navbar = () => {
             <Link
               to="/login"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 text-caption text-green-600 hover:text-green-700 transition"
+              className="flex items-center gap-3 min-h-[44px] text-body-md font-medium text-green-600 hover:text-green-700 transition"
             >
               <User className="w-5 h-5" />
               Login / Sign Up

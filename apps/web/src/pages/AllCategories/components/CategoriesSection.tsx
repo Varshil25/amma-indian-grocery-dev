@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import SectionHeading from "../../../components/SectionHeading";
 import { useCategories } from "../../../hooks/use-categories";
 
 // Built-in icons for the starter categories, used until an image is uploaded in the admin
@@ -38,13 +39,14 @@ interface CategoryCardProps {
 
 const CategoryCard: React.FC<CategoryCardProps> = ({ img, name, items, link }) => (
   <Link to={link} tabIndex={0} className="w-full focus-visible:outline-none">
-    <div className="group cursor-pointer flex flex-col items-center gap-4 transition-all duration-200">
-      <div className="w-[150px] h-[150px] md:w-[160px] md:h-[160px] rounded-full bg-background-secondary flex items-center justify-center transition-all duration-200 group-hover:scale-[1.05] group-hover:shadow-md">
-        <img src={img} alt={name} className="w-[65px] md:w-[90px] select-none pointer-events-none" />
+    <div className="group cursor-pointer flex flex-col items-center gap-3 transition-all duration-200">
+      {/* fills its grid cell, never wider than 160px */}
+      <div className="w-full max-w-[160px] aspect-square rounded-full bg-background-secondary flex items-center justify-center overflow-hidden transition-all duration-200 group-hover:scale-[1.05] group-hover:shadow-md">
+        <img src={img} alt="" className="w-1/2 h-1/2 object-contain select-none pointer-events-none" />
       </div>
       <div className="text-center">
-        <h3 className="text-body-lg md:text-title font-medium text-text-500">{name}</h3>
-        <p className="text-caption text-text-300">{items}</p>
+        <h3 className="text-body-md sm:text-title font-medium text-text-500 group-hover:text-green-600 transition">{name}</h3>
+        <p className="text-body-sm text-text-300">{items}</p>
       </div>
     </div>
   </Link>
@@ -67,18 +69,14 @@ const CategoriesSection = () => {
     });
 
   return (
-    <section className="w-full bg-white py-20 select-none">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-h5 md:text-h3 font-semibold text-text-500">
-            Choose <span className="text-green-500">Categories</span>
-          </h2>
-        </div>
+    <section className="w-full bg-white section-padding">
+      <div className="container mx-auto px-4 sm:px-6">
+        <SectionHeading title="Choose" highlight="Categories" className="mb-8 md:mb-12" />
 
         {isLoading && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-10 place-items-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-8 sm:gap-x-6 place-items-center">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="w-[150px] h-[150px] rounded-full bg-background-secondary animate-pulse" />
+              <div key={i} className="w-full max-w-[160px] aspect-square rounded-full bg-background-secondary animate-pulse" />
             ))}
           </div>
         )}
@@ -91,9 +89,9 @@ const CategoriesSection = () => {
           </div>
         )}
         {!isLoading && !isError && categories.length === 0 && (
-          <p className="text-center text-text-300">Categories are coming soon.</p>
+          <p className="text-center text-body-md text-text-300">Categories are coming soon.</p>
         )}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-10 md:gap-y-14 place-items-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-8 sm:gap-x-6 md:gap-y-12 items-start">
           {categories.map((cat, idx) => (
             <CategoryCard key={cat.link || idx} {...cat} />
           ))}

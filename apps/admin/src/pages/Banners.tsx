@@ -123,12 +123,12 @@ export default function Banners() {
                   <div className="mt-auto flex gap-1 pt-2">
                     <button
                       onClick={() => save.mutate({ id: b.id, isActive: !b.isActive }, { onError: (err) => toast.error(errorMessage(err)) })}
-                      className="text-gray-500 hover:text-gray-700 p-1"
+                      className="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 transition"
                       title={b.isActive ? "Hide" : "Show"}
                     >
                       {b.isActive ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
-                    <button onClick={() => openEdit(b)} className="text-blue-500 hover:text-blue-600 p-1" title="Edit" aria-label={`Edit ${b.title}`}>
+                    <button onClick={() => openEdit(b)} className="text-blue-500 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100 transition" title="Edit" aria-label={`Edit ${b.title}`}>
                       <Pencil size={15} />
                     </button>
                     <button
@@ -139,7 +139,7 @@ export default function Banners() {
                           onError: (err) => toast.error(errorMessage(err)),
                         });
                       }}
-                      className="text-red-500 hover:text-red-600 p-1"
+                      className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-gray-100 transition"
                       title="Delete"
                       aria-label={`Delete ${b.title}`}
                     >
@@ -186,6 +186,10 @@ export default function Banners() {
               />
             </div>
             <ImageInput value={form.image} onChange={(image) => setForm((f) => ({ ...f, image }))} max={1} label="Image *" />
+            <p className="text-xs text-gray-500 -mt-1">
+              Use a landscape photo, about 1200 × 800 px. On the home page it fills the side of the card
+              (the top on phones) and the edges may be trimmed to fit.
+            </p>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
                 <label className={labelClass} htmlFor="b-link">

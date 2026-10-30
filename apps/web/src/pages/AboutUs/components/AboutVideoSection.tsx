@@ -87,11 +87,11 @@ const AboutVideoSection = () => {
     : {};
 
   return (
-    <section className="w-full bg-white py-20 md:py-2 select-none">
+    <section className="w-full bg-white pb-12 md:pb-16 lg:pb-20">
       
       {/* VIDEO SECTION */}
       <div
-        className="relative w-full h-[380px] md:h-[520px] overflow-hidden max-w-[1440px] mx-auto"
+        className="relative w-full h-[260px] sm:h-[380px] md:h-[460px] lg:h-[520px] overflow-hidden max-w-[1440px] mx-auto"
         {...videoContainerEvents}
       >
         {!showVideo ? (
@@ -107,12 +107,12 @@ const AboutVideoSection = () => {
             {/* Play Button */}
             <button
               aria-label="Play Video"
-              className="absolute inset-0 m-auto w-[110px] h-[110px] md:w-[140px] md:h-[140px] bg-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition"
+              className="absolute inset-0 m-auto w-20 h-20 sm:w-[110px] sm:h-[110px] md:w-[140px] md:h-[140px] bg-white rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition"
               onClick={handlePlay}
               tabIndex={0}
               type="button"
             >
-              <HiPlay className="text-green-600 w-12 h-12" />
+              <HiPlay className="text-green-600 w-10 h-10 sm:w-12 sm:h-12" />
             </button>
           </>
         ) : (
@@ -161,24 +161,24 @@ const AboutVideoSection = () => {
       </div>
 
       {/* FEATURES CARDS */}
-      <div className="container mx-auto px-6 mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="container mx-auto px-4 sm:px-6 mt-10 md:mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
         {features.map((item, index) => (
           <div
             key={index}
-            className="bg-background-secondary rounded-2xl p-8 md:p-10 hover:shadow-md transition duration-300"
+            className="bg-background-secondary rounded-2xl p-6 sm:p-8 lg:p-10 hover:shadow-md transition duration-300"
           >
             {/* ICON */}
-            <div className="w-12 h-12 rounded-[12px] bg-green-500 flex items-center justify-center mb-6">
+            <div className="w-12 h-12 rounded-[12px] bg-green-500 flex items-center justify-center mb-5">
               {item.icon}
             </div>
 
             {/* TITLE */}
-            <h3 className="text-h6 md:text-h5 font-medium text-black mb-3">
+            <h3 className="text-h6 font-semibold text-text-500 mb-3">
               {item.title}
             </h3>
 
             {/* TEXT */}
-            <p className="text-body-lg text-text-300 leading-relaxed">
+            <p className="text-body-lg text-text-300">
               {item.desc}
             </p>
           </div>
