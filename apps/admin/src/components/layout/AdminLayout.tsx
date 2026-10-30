@@ -15,17 +15,21 @@ import {
   ChevronDown,
   Boxes,
   FileText,
+  FolderTree,
+  Image,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth-store";
 
 const navItems = [
   { label: "Dashboard", path: "/", icon: LayoutDashboard },
   { label: "Products", path: "/products", icon: Package },
+  { label: "Categories", path: "/categories", icon: FolderTree },
   { label: "Orders", path: "/orders", icon: ShoppingCart },
   { label: "Customers", path: "/customers", icon: Users },
   { label: "Inventory", path: "/inventory", icon: Boxes },
   { label: "Coupons", path: "/coupons", icon: Tag },
   { label: "Hot Deals", path: "/deals", icon: Flame },
+  { label: "Banners", path: "/banners", icon: Image },
   { label: "Reports", path: "/reports", icon: BarChart3 },
   { label: "Pages", path: "/pages", icon: FileText },
   { label: "Settings", path: "/settings", icon: Settings },

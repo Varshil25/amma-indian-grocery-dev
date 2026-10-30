@@ -131,6 +131,7 @@ export default function Wishlist() {
                               isInWishlist: true,
                             })
                           }
+                          aria-label={`Remove ${item.product.name} from wishlist`}
                           className="p-2.5 border border-text-100 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-500 transition"
                         >
                           <Trash2 size={18} />

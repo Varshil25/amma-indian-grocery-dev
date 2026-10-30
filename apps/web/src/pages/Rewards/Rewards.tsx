@@ -139,7 +139,7 @@ export default function Rewards() {
     <>
       <PageHeader
         title="Rewards"
-        breadcrumbs={[{ label: "Home", path: "/" }, { label: "Rewards" }]}
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Rewards" }]}
       />
 
       <div className="container mx-auto px-6 py-10">

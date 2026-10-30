@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import prisma from "../config/database.js";
 import { BadRequestError, NotFoundError } from "../middleware/errorHandler.js";
+import { evaluateCoupon } from "./coupon.service.js";
 
 const cartItemInclude = {
   product: {
@@ -8,13 +9,14 @@ const cartItemInclude = {
       id: true,
       name: true,
       slug: true,
+      sku: true,
       price: true,
       compareAtPrice: true,
       unit: true,
       unitValue: true,
       isActive: true,
       images: {
-        where: { isPrimary: true },
+        orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }],
         select: { url: true, altText: true },
         take: 1,
       },
@@ -70,8 +72,8 @@ export class CartService {
         quantity: item.quantity,
         product: item.product,
         lineTotal: parseFloat(lineTotal.toFixed(2)),
-        inStock: available > 0,
-        availableQty: available,
+        inStock: item.product.isActive && available > 0,
+        availableQty: item.product.isActive ? available : 0,
       };
     });
 
@@ -184,54 +186,12 @@ export class CartService {
   }
 
   async applyCoupon(userId: string, code: string) {
-    const coupon = await prisma.coupon.findUnique({ where: { code: code.toUpperCase() } });
-
-    if (!coupon || !coupon.isActive) {
-      throw new BadRequestError("Invalid coupon code");
-    }
-
-    const now = new Date();
-    if (now < coupon.startDate || now > coupon.endDate) {
-      throw new BadRequestError("This coupon has expired");
-    }
-
-    if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-      throw new BadRequestError("This coupon has reached its usage limit");
-    }
-
-    // Check per-user limit
-    const userUsageCount = await prisma.order.count({
-      where: { userId, couponId: coupon.id },
-    });
-    if (userUsageCount >= coupon.perUserLimit) {
-      throw new BadRequestError("You have already used this coupon");
-    }
-
-    // Get cart subtotal
     const cart = await this.getCart(userId);
     if (cart.items.length === 0) {
       throw new BadRequestError("Your cart is empty");
     }
 
-    // Check minimum order
-    if (coupon.minimumOrder && cart.subtotal < Number(coupon.minimumOrder)) {
-      throw new BadRequestError(
-        `Minimum order of $${Number(coupon.minimumOrder).toFixed(2)} required for this coupon`
-      );
-    }
-
-    // Calculate discount
-    let discount = 0;
-    if (coupon.discountType === "PERCENTAGE") {
-      discount = cart.subtotal * (Number(coupon.discountValue) / 100);
-      if (coupon.maximumDiscount) {
-        discount = Math.min(discount, Number(coupon.maximumDiscount));
-      }
-    } else if (coupon.discountType === "FIXED_AMOUNT") {
-      discount = Number(coupon.discountValue);
-    }
-
-    discount = Math.min(discount, cart.subtotal);
+    const { coupon, discount } = await evaluateCoupon(userId, code, cart.subtotal);
 
     return {
       ...cart,
@@ -242,7 +202,7 @@ export class CartService {
         discountValue: Number(coupon.discountValue),
         description: coupon.description,
       },
-      discount: parseFloat(discount.toFixed(2)),
+      discount,
       total: parseFloat((cart.subtotal - discount).toFixed(2)),
     };
   }

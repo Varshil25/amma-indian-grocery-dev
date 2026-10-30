@@ -53,3 +53,61 @@ export function useStoreSettings() {
     staleTime: 5 * 60 * 1000, // cache for 5 minutes
   });
 }
+
+export interface Banner {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  image: string;
+  link?: string | null;
+  position: string;
+  sortOrder: number;
+}
+
+export function useBanners(position = "home_promo") {
+  return useQuery({
+    queryKey: ["content", "banners", position],
+    queryFn: () =>
+      apiClient.get<{ success: boolean; data: Banner[] }>(`/content/banners?position=${encodeURIComponent(position)}`, {
+        skipAuth: true,
+      }),
+    select: (res) => res.data,
+    staleTime: 60 * 1000,
+  });
+}
+
+export interface ActiveDeal {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  bannerImage?: string | null;
+  discountType: "PERCENTAGE" | "FIXED_AMOUNT" | string;
+  discountValue: number;
+  startDate: string;
+  endDate: string;
+  productCount: number;
+  previewProducts: { id: string; name: string; slug: string; price: number; compareAtPrice: number | null; image: string | null }[];
+}
+
+export function useActiveDeals() {
+  return useQuery({
+    queryKey: ["deals", "active"],
+    queryFn: () => apiClient.get<{ success: boolean; data: ActiveDeal[] }>("/deals", { skipAuth: true }),
+    select: (res) => res.data,
+    staleTime: 60 * 1000,
+  });
+}
+
+/** Store hours saved in Admin → Settings; days without hours are dropped. */
+export function parseStoreHours(raw?: string): { day: string; time: string }[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((h) => h && typeof h.day === "string" && typeof h.time === "string" && h.time.trim())
+      : [];
+  } catch {
+    return [];
+  }
+}

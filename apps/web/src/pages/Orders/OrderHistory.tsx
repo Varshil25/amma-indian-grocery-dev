@@ -112,7 +112,7 @@ export default function OrderHistory() {
     <>
       <PageHeader
         title="My Orders"
-        breadcrumbs={[{ label: "Home", path: "/" }, { label: "Orders" }]}
+        breadcrumbs={[{ label: "Home", href: "/" }, { label: "Orders" }]}
       />
 
       <div className="container mx-auto px-6 py-10">

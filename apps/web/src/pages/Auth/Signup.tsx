@@ -39,7 +39,7 @@ export default function Signup() {
 
   const onSubmit = (data: SignupForm) => {
     const { confirmPassword, ...payload } = data;
-    registerMutation.mutate(payload);
+    registerMutation.mutate(payload as { email: string; password: string; firstName: string; lastName: string; phone?: string; referralCode?: string });
   };
 
   return (

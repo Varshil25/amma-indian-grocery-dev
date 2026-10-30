@@ -4,6 +4,11 @@ import prisma from "../config/database.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
 import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "../middleware/errorHandler.js";
 import type { JwtPayload } from "../middleware/auth.js";
+import { emailService } from "./email.service.js";
+
+const normalizeEmail = (email: string) => email.trim().toLowerCase();
+const findByEmail = (email: string) =>
+  prisma.user.findFirst({ where: { email: { equals: normalizeEmail(email), mode: "insensitive" } } });
 
 export class AuthService {
   async register(data: {
@@ -14,8 +19,9 @@ export class AuthService {
     phone?: string;
     referralCode?: string;
   }) {
+    data = { ...data, email: normalizeEmail(data.email) };
     // Check if user exists
-    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    const existing = await findByEmail(data.email);
     if (existing) {
       throw new ConflictError("An account with this email already exists");
     }
@@ -63,7 +69,7 @@ export class AuthService {
     // Handle referral if code provided
     if (data.referralCode) {
       const referrer = await prisma.user.findUnique({
-        where: { referralCode: data.referralCode },
+        where: { referralCode: data.referralCode.trim().toUpperCase() },
       });
       if (referrer) {
         // Give referee bonus (100 points)
@@ -88,13 +94,17 @@ export class AuthService {
           data: {
             referrerId: referrer.id,
             refereeId: user.id,
-            referralCode: data.referralCode,
+            referralCode: data.referralCode.trim().toUpperCase(),
             refereeBonus: 100,
             referrerBonus: 0, // awarded when referee makes first purchase
           },
         });
       }
     }
+
+    emailService
+      .sendWelcome({ email: user.email, name: user.firstName })
+      .catch((err) => console.error("Welcome email failed:", err));
 
     // Generate tokens
     const tokens = await this.generateTokens(user.id, user.email, user.role);
@@ -113,7 +123,7 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await findByEmail(email);
     if (!user || !user.passwordHash) {
       throw new UnauthorizedError("Invalid email or password");
     }
@@ -203,14 +213,15 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await findByEmail(email);
     if (!user) {
       // Don't reveal if user exists
       return { message: "If an account exists, a reset code has been sent" };
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = crypto.randomInt(100000, 1000000).toString();
 
+    email = user.email;
     // Delete old OTPs for this user
     await prisma.otpVerification.deleteMany({
       where: { identifier: email, type: "PASSWORD_RESET" },
@@ -225,13 +236,18 @@ export class AuthService {
       },
     });
 
-    // TODO: Send email with code via SendGrid in production
-    console.log(`[DEV] Password reset code for ${email}: ${code}`);
+    await emailService.sendPasswordReset({ email, code });
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[DEV] Password reset code for ${email}: ${code}`);
+    }
 
     return { message: "If an account exists, a reset code has been sent" };
   }
 
   async resetPassword(email: string, code: string, newPassword: string) {
+    const user = await findByEmail(email);
+    if (!user) throw new BadRequestError("Invalid or expired reset code");
+    email = user.email;
     const otp = await prisma.otpVerification.findFirst({
       where: {
         identifier: email,
@@ -267,18 +283,15 @@ export class AuthService {
     // Update password
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({
-      where: { email },
+      where: { id: user.id },
       data: { passwordHash },
     });
 
     // Revoke all refresh tokens for this user
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (user) {
-      await prisma.refreshToken.updateMany({
-        where: { userId: user.id, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
-    }
+    await prisma.refreshToken.updateMany({
+      where: { userId: user.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
 
     return { message: "Password has been reset successfully" };
   }

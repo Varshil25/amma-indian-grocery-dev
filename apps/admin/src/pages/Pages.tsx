@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileText, Plus, Edit2, Loader2, Save, X } from "lucide-react";
+import { FileText, Plus, Edit2, Loader2, Save, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "../lib/api-client";
+import { errorMessage } from "../lib/utils";
+
+// Linked from the store footer; deleting or hiding them leaves a "page not found"
+const CORE_SLUGS = ["privacy-policy", "shipping", "refund", "payments", "qa"];
 
 interface StaticPage {
   id: string;
@@ -18,7 +22,7 @@ export default function Pages() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<StaticPage | null>(null);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ title: "", slug: "", content: "" });
+  const [form, setForm] = useState({ title: "", slug: "", content: "", isActive: true });
 
   const { data: pages, isLoading } = useQuery<StaticPage[]>({
     queryKey: ["admin", "pages"],
@@ -26,14 +30,14 @@ export default function Pages() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (data: { id?: string; title: string; slug: string; content: string }) =>
+    mutationFn: (data: { id?: string; title: string; slug: string; content: string; isActive: boolean }) =>
       apiClient.post("/admin/pages", data),
     onSuccess: () => {
       toast.success("Page saved successfully");
       queryClient.invalidateQueries({ queryKey: ["admin", "pages"] });
       setEditing(null);
       setCreating(false);
-      setForm({ title: "", slug: "", content: "" });
+      setForm({ title: "", slug: "", content: "", isActive: true });
     },
     onError: (err: Error) => {
       toast.error(err.message || "Failed to save page");
@@ -43,13 +47,28 @@ export default function Pages() {
   const handleEdit = (page: StaticPage) => {
     setEditing(page);
     setCreating(false);
-    setForm({ title: page.title, slug: page.slug, content: page.content });
+    setForm({ title: page.title, slug: page.slug, content: page.content, isActive: page.isActive });
   };
 
   const handleCreate = () => {
     setCreating(true);
     setEditing(null);
-    setForm({ title: "", slug: "", content: "" });
+    setForm({ title: "", slug: "", content: "", isActive: true });
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiClient.delete(`/admin/pages/${id}`),
+    onSuccess: () => {
+      toast.success("Page deleted");
+      queryClient.invalidateQueries({ queryKey: ["admin", "pages"] });
+    },
+    onError: (err: Error) => toast.error(errorMessage(err, "Failed to delete page")),
+  });
+
+  const handleDelete = (page: StaticPage) => {
+    const warn = CORE_SLUGS.includes(page.slug) ? " It's linked from the store footer, which will then show 'page not found'." : "";
+    if (!confirm(`Delete "${page.title}"?${warn}`)) return;
+    deleteMutation.mutate(page.id);
   };
 
   const handleSave = () => {
@@ -62,13 +81,14 @@ export default function Pages() {
       title: form.title,
       slug: form.slug,
       content: form.content,
+      isActive: form.isActive,
     });
   };
 
   const handleCancel = () => {
     setEditing(null);
     setCreating(false);
-    setForm({ title: "", slug: "", content: "" });
+    setForm({ title: "", slug: "", content: "", isActive: true });
   };
 
   const isFormOpen = editing || creating;
@@ -140,6 +160,19 @@ export default function Pages() {
             />
           </div>
 
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+              className="w-4 h-4 rounded border-gray-300 text-green-500"
+            />
+            Published (visible on the store)
+          </label>
+          {creating && form.slug && !CORE_SLUGS.includes(form.slug) && (
+            <p className="text-xs text-gray-500">This page will be at /page/{form.slug} on the store.</p>
+          )}
+
           <div className="flex gap-3">
             <button
               onClick={handleSave}
@@ -192,6 +225,7 @@ export default function Pages() {
                   <tr key={page.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <span className="text-sm font-medium text-gray-900">{page.title}</span>
+                      {!page.isActive && <span className="ml-2 text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">Draft</span>}
                     </td>
                     <td className="px-6 py-4">
                       <code className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">/{page.slug}</code>
@@ -203,8 +237,16 @@ export default function Pages() {
                       <button
                         onClick={() => handleEdit(page)}
                         className="text-green-600 hover:text-green-700 p-1"
+                        aria-label={`Edit ${page.title}`}
                       >
                         <Edit2 size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(page)}
+                        className="text-red-500 hover:text-red-600 p-1"
+                        aria-label={`Delete ${page.title}`}
+                      >
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>

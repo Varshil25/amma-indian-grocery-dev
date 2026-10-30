@@ -2,32 +2,29 @@ import { Link } from "react-router-dom";
 import { HiLocationMarker, HiPhone, HiMail, HiClock } from "react-icons/hi";
 import { FaFacebookF, FaWhatsapp, FaInstagram } from "react-icons/fa";
 import footerLogo from "../assets/Logos/footer_logo.svg";
-import { useStoreSettings } from "../hooks/use-content";
+import { useStoreSettings, parseStoreHours } from "../hooks/use-content";
 
 const Footer = () => {
   const { data: settings } = useStoreSettings();
 
-  const address = settings?.store_address || "1762 School House Road, ON L4N 9B3, Canada";
-  const phone = settings?.store_phone || "1233-777";
-  const email = settings?.store_email || "groceryish@contact.com";
-  const facebookUrl = settings?.social_facebook || "https://facebook.com";
-  const whatsappUrl = settings?.social_whatsapp || "https://wa.me";
-  const instagramUrl = settings?.social_instagram || "https://instagram.com";
+  // Everything here comes from Admin → Settings; anything not filled in is simply not shown.
+  const address = settings?.store_address?.trim();
+  const phone = settings?.store_phone?.trim();
+  const email = settings?.store_email?.trim();
+  const socials = [
+    { url: settings?.social_facebook?.trim(), Icon: FaFacebookF, label: "Facebook" },
+    { url: settings?.social_whatsapp?.trim(), Icon: FaWhatsapp, label: "WhatsApp" },
+    { url: settings?.social_instagram?.trim(), Icon: FaInstagram, label: "Instagram" },
+  ].filter((x) => x.url && /^https?:\/\//.test(x.url));
 
-  // Build summary hours from store_hours JSON
-  let workHours = "Tue-Sat";
-  if (settings?.store_hours) {
-    try {
-      const hours: { day: string; time: string }[] = JSON.parse(settings.store_hours);
-      const openDays = hours.filter((h) => h.time !== "Closed");
-      if (openDays.length > 0) {
-        const firstDay = openDays[0].day.slice(0, 3);
-        const lastDay = openDays[openDays.length - 1].day.slice(0, 3);
-        const firstTime = openDays[0].time;
-        workHours = `${firstTime}, ${firstDay}-${lastDay}`;
-      }
-    } catch { /* use default */ }
-  }
+  const hours = parseStoreHours(settings?.store_hours);
+  const openDays = hours.filter((h) => h.time.trim().toLowerCase() !== "closed");
+  const workHours =
+    openDays.length === 0
+      ? null
+      : openDays.every((d) => d.time === openDays[0].time)
+        ? `${openDays[0].time}, ${openDays[0].day.slice(0, 3)}–${openDays[openDays.length - 1].day.slice(0, 3)}`
+        : "See the Contact page";
 
   return (
     <footer className="w-full bg-white border-t">
@@ -38,25 +35,39 @@ const Footer = () => {
           <img src={footerLogo} alt="Amma Grocery" className="w-20" />
 
           <div className="space-y-4 text-text-900 text-caption">
-            <div className="flex gap-3 items-start">
-              <HiLocationMarker className="text-green-500 w-5 h-5 mt-1" />
-              <p><span className="font-medium">Address:</span> {address}</p>
-            </div>
+            {address && (
+              <div className="flex gap-3 items-start">
+                <HiLocationMarker className="text-green-500 w-5 h-5 mt-1 shrink-0" />
+                <p><span className="font-medium">Address:</span> {address}</p>
+              </div>
+            )}
 
-            <div className="flex gap-3 items-top">
-              <HiPhone className="text-green-500 w-5 h-5" />
-              <p><span className="font-medium">Call Us:</span> {phone}</p>
-            </div>
+            {phone && (
+              <div className="flex gap-3 items-top">
+                <HiPhone className="text-green-500 w-5 h-5 shrink-0" />
+                <p>
+                  <span className="font-medium">Call Us:</span>{" "}
+                  <a href={`tel:${phone.replace(/[^\d+]/g, "")}`} className="hover:text-green-500">{phone}</a>
+                </p>
+              </div>
+            )}
 
-            <div className="flex gap-3 items-center">
-              <HiMail className="text-green-500 w-5 h-5" />
-              <p><span className="font-medium">Email:</span> {email}</p>
-            </div>
+            {email && (
+              <div className="flex gap-3 items-center">
+                <HiMail className="text-green-500 w-5 h-5 shrink-0" />
+                <p>
+                  <span className="font-medium">Email:</span>{" "}
+                  <a href={`mailto:${email}`} className="hover:text-green-500">{email}</a>
+                </p>
+              </div>
+            )}
 
-            <div className="flex gap-3 items-center">
-              <HiClock className="text-green-500 w-5 h-5" />
-              <p><span className="font-medium">Work hours:</span> {workHours}</p>
-            </div>
+            {workHours && (
+              <div className="flex gap-3 items-center">
+                <HiClock className="text-green-500 w-5 h-5 shrink-0" />
+                <p><span className="font-medium">Work hours:</span> {workHours}</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -88,19 +99,17 @@ const Footer = () => {
       {/* Bottom Bar */}
       <div className="border-t mt-10">
         <div className="container mx-auto px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-4">
-          <p className="text-label text-text-300">&copy; {new Date().getFullYear()} &mdash; All rights reserved</p>
+          <p className="text-label text-text-300">&copy; {new Date().getFullYear()} {settings?.store_name?.trim() || "Amma Grocery"} &mdash; All rights reserved</p>
 
-          <div className="flex gap-3">
-            <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition">
-              <FaFacebookF className="text-white w-3 h-3" />
-            </a>
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition">
-              <FaWhatsapp className="text-white w-3 h-3" />
-            </a>
-            <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition">
-              <FaInstagram className="text-white w-3 h-3" />
-            </a>
-          </div>
+          {socials.length > 0 && (
+            <div className="flex gap-3">
+              {socials.map(({ url, Icon, label }) => (
+                <a key={label} href={url} target="_blank" rel="noopener noreferrer" aria-label={label} className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition">
+                  <Icon className="text-white w-3 h-3" />
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </footer>

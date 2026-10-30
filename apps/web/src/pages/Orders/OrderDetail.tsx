@@ -50,7 +50,7 @@ export default function OrderDetail() {
   if (isLoading) {
     return (
       <>
-        <PageHeader title="Order Details" breadcrumbs={[{ label: "Home", path: "/" }, { label: "Orders", path: "/orders" }, { label: "Details" }]} />
+        <PageHeader title="Order Details" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Orders", href: "/orders" }, { label: "Details" }]} />
         <div className="container mx-auto px-6 py-20 flex justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-green-500" />
         </div>
@@ -61,7 +61,7 @@ export default function OrderDetail() {
   if (!order) {
     return (
       <>
-        <PageHeader title="Order Not Found" breadcrumbs={[{ label: "Home", path: "/" }, { label: "Orders", path: "/orders" }, { label: "Not Found" }]} />
+        <PageHeader title="Order Not Found" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Orders", href: "/orders" }, { label: "Not Found" }]} />
         <div className="container mx-auto px-6 py-20 text-center">
           <Package size={48} className="mx-auto text-text-100 mb-4" />
           <p className="text-text-300 text-body-lg mb-4">Order not found</p>
@@ -75,15 +75,15 @@ export default function OrderDetail() {
 
   const config = statusConfig[order.status] || statusConfig.PENDING;
   const StatusIcon = config.icon;
-  const canCancel = ["PENDING", "CONFIRMED"].includes(order.status);
+  const canCancel = order.canCancel ?? (["PENDING", "CONFIRMED"].includes(order.status) && order.payment?.status !== "COMPLETED");
 
   return (
     <>
       <PageHeader
         title={`Order #${order.orderNumber}`}
         breadcrumbs={[
-          { label: "Home", path: "/" },
-          { label: "Orders", path: "/orders" },
+          { label: "Home", href: "/" },
+          { label: "Orders", href: "/orders" },
           { label: `#${order.orderNumber}` },
         ]}
       />
@@ -284,7 +284,12 @@ export default function OrderDetail() {
                 <div className="mt-4 pt-3 border-t border-text-50">
                   <div className="flex items-center gap-2 text-body-xs text-text-200">
                     <CreditCard size={14} />
-                    {order.payment.method} · {order.payment.status}
+                    {order.payment.method === "CASH_ON_DELIVERY"
+                      ? `Pay on ${order.fulfillmentType === "PICKUP" ? "pickup" : "delivery"}`
+                      : order.payment.method === "STRIPE"
+                        ? "Card"
+                        : order.payment.method}{" "}
+                    · {order.payment.status === "COMPLETED" ? "Paid" : order.payment.status === "FAILED" ? "Not charged" : "Not paid yet"}
                   </div>
                 </div>
               )}

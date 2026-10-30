@@ -1,30 +1,21 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { useStoreSettings } from "../../../hooks/use-content";
-
-const defaultHours = [
-  { day: "Monday", time: "Closed" },
-  { day: "Tuesday", time: "10:00am - 8:00pm" },
-  { day: "Wednesday", time: "10:00am - 8:00pm" },
-  { day: "Thursday", time: "9:00am - 8:00pm" },
-  { day: "Friday", time: "9:00am - 8:00pm" },
-  { day: "Saturday", time: "9:00am - 6:00pm" },
-  { day: "Sunday", time: "Closed" },
-];
+import { useStoreSettings, parseStoreHours } from "../../../hooks/use-content";
 
 const ContactSection = () => {
   const [form, setForm] = useState({ name: "", phone: "", email: "", subject: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const { data: settings } = useStoreSettings();
 
-  const hours: { day: string; time: string }[] = settings?.store_hours
-    ? (() => { try { return JSON.parse(settings.store_hours); } catch { return defaultHours; } })()
-    : defaultHours;
-
-  const storeName = settings?.store_name || "Amma Grocery";
-  const storeAddress = settings?.store_address || "ON L4N 9B3, Canada";
-  const mapEmbed = settings?.store_map_embed || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2873.129074908986!2d-80.19221738450817!3d43.51445267912656!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x882b8c3b91923bb7%3A0xe4722d509dbb00c4!2s403%20Arkell%20Rd%2C%20Guelph%2C%20ON%20N1L%201E5%2C%20Canada!5e0!3m2!1sen!2sin!4v1705673530123!5m2!1sen!2sin";
+  // All of this comes from Admin → Settings; sections without data are hidden
+  const hours = parseStoreHours(settings?.store_hours);
+  const storeName = settings?.store_name?.trim() || "Amma Grocery";
+  const storeAddress = settings?.store_address?.trim();
+  const storePhone = settings?.store_phone?.trim();
+  const storeEmail = settings?.store_email?.trim();
+  const rawMap = settings?.store_map_embed?.trim() || "";
+  const mapEmbed = /^https:\/\/(www\.)?google\.com\/maps\/embed/.test(rawMap) ? rawMap : "";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -66,6 +57,7 @@ const ContactSection = () => {
       <div className="container mx-auto px-6 max-w-[1200px]">
 
         {/* MAP */}
+        {mapEmbed && (
         <div className="overflow-hidden rounded-2xl h-[350px] sm:h-[420px] mb-16">
           <iframe
             title="Store Location"
@@ -78,13 +70,14 @@ const ContactSection = () => {
             src={mapEmbed}
           ></iframe>
         </div>
+        )}
 
         {/* TITLE + SUBTEXT */}
         <div className="text-center max-w-[750px] mx-auto">
           <h2 className="text-h3 md:text-5xl font-semibold">CONTACT <span className="text-green-500">INFO</span> </h2>
           <p className="text-body-lg mt-4 text-text-400">
-            We're here to help you look and feel your best. Reach out to us with questions,
-            feedback, or appointment request — we'd love to hear from you!
+            Questions about an order, a product you can't find, or feedback for us? Send a message
+            and we'll get back to you.
           </p>
         </div>
 
@@ -93,20 +86,34 @@ const ContactSection = () => {
 
           {/* HOURS LIST */}
           <div className="w-full lg:w-[280px]">
-            <h3 className="text-h5 font-semibold mb-6">Hours:</h3>
-            <div className="space-y-4">
-              {hours.map((item, idx) => (
-                <div key={idx} className="flex justify-between text-body-lg text-text-500">
-                  <span>{item.day}</span>
-                  <span className={`${item.time.includes("Closed") ? "text-red-500" : ""}`}>
-                    {item.time}
-                  </span>
+            {hours.length > 0 && (
+              <>
+                <h3 className="text-h5 font-semibold mb-6">Hours:</h3>
+                <div className="space-y-4 mb-8">
+                  {hours.map((item, idx) => (
+                    <div key={idx} className="flex justify-between gap-4 text-body-lg text-text-500">
+                      <span>{item.day}</span>
+                      <span className={`${item.time.toLowerCase().includes("closed") ? "text-red-500" : ""}`}>
+                        {item.time}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
 
-            <p className="mt-8 text-h6 font-semibold">{storeName}</p>
-            <p className="text-body-lg text-text-500">{storeAddress}</p>
+            <p className="text-h6 font-semibold">{storeName}</p>
+            {storeAddress && <p className="text-body-lg text-text-500">{storeAddress}</p>}
+            {storePhone && (
+              <a href={`tel:${storePhone.replace(/[^\d+]/g, "")}`} className="block text-body-lg text-text-500 hover:text-green-600">
+                {storePhone}
+              </a>
+            )}
+            {storeEmail && (
+              <a href={`mailto:${storeEmail}`} className="block text-body-lg text-text-500 hover:text-green-600 break-all">
+                {storeEmail}
+              </a>
+            )}
           </div>
 
           {/* FORM */}

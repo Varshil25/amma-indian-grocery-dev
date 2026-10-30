@@ -5,6 +5,8 @@ import { useAddToCart } from "../../hooks/use-cart";
 import { useToggleWishlist, useWishlistIds } from "../../hooks/use-wishlist";
 import { useCartUIStore } from "../../stores/cart-ui-store";
 import { useAuthStore } from "../../stores/auth-store";
+import { useRequireLogin } from "../../hooks/use-auth";
+import { PLACEHOLDER_IMAGE } from "../../lib/product-helpers";
 
 interface ProductProps {
   id?: number | string;
@@ -49,6 +51,7 @@ const ProductCard: React.FC<ProductProps> = ({
   const toggleWishlist = useToggleWishlist();
   const wishlistIds = useWishlistIds();
   const openDrawer = useCartUIStore((s) => s.openDrawer);
+  const requireLogin = useRequireLogin();
   const isInWishlist = wishlistIds.includes(productId);
 
   const displayPrice = price.startsWith("$") ? price : `$${parseFloat(price).toFixed(2)}`;
@@ -58,7 +61,7 @@ const ProductCard: React.FC<ProductProps> = ({
       ? displayOldPrice
       : `$${parseFloat(displayOldPrice).toFixed(2)}`
     : null;
-  const displayImage = img || imageUrl || "/placeholder-product.png";
+  const displayImage = img || imageUrl || PLACEHOLDER_IMAGE;
   const productLink = slug ? `/product/${slug}` : `/product/${id}`;
 
   // Calculate discount badge
@@ -79,7 +82,7 @@ const ProductCard: React.FC<ProductProps> = ({
       tabIndex={0}
     >
       <div className="relative flex justify-center">
-        {discountBadge && (
+        {discountBadge && inStock && (
           <span className="absolute top-2 left-2 text-[10px] bg-green-600 text-white rounded-full px-3 py-1">
             {discountBadge}
           </span>
@@ -89,13 +92,22 @@ const ProductCard: React.FC<ProductProps> = ({
             Out of Stock
           </span>
         )}
-        <img src={displayImage} className="w-[150px] h-[150px] object-contain" alt={name} />
+        <img
+          src={displayImage}
+          className="w-[150px] h-[150px] object-contain"
+          alt={name}
+          loading="lazy"
+          onError={(e) => {
+            if (!e.currentTarget.src.endsWith("placeholder.svg")) e.currentTarget.src = PLACEHOLDER_IMAGE;
+          }}
+        />
         <button
           type="button"
+          aria-label={isInWishlist ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (!isAuthenticated) return;
+            if (!isAuthenticated) return requireLogin("Sign in to save items to your wishlist");
             toggleWishlist.mutate({ productId, isInWishlist });
           }}
           className={`absolute top-2 right-2 border rounded-full p-2 transition cursor-pointer ${
@@ -132,16 +144,18 @@ const ProductCard: React.FC<ProductProps> = ({
         <button
           type="button"
           tabIndex={-1}
+          aria-label={`Add ${name} to cart`}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (!isAuthenticated || !productId) return;
+            if (!productId) return;
+            if (!isAuthenticated) return requireLogin("Sign in to add items to your cart");
             addToCart.mutate({ productId }, { onSuccess: () => openDrawer() });
           }}
           disabled={!inStock || addToCart.isPending}
           className="bg-green-50 text-green-500 text-[14px] font-medium px-5 py-2 rounded-full hover:bg-green-500 hover:text-white transition select-none disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {addToCart.isPending ? "..." : "Add"}
+          {!inStock ? "Sold out" : addToCart.isPending ? "..." : "Add"}
         </button>
       </div>
     </Link>

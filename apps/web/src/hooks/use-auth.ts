@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "../lib/api-client";
 import { useAuthStore } from "../stores/auth-store";
@@ -26,8 +26,26 @@ interface MessageResponse {
   data: { message: string };
 }
 
+/** Where to go after signing in: the page the shopper was sent away from, else home. */
+function useReturnTo() {
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from;
+  return from && from.startsWith("/") && !from.startsWith("/login") && !from.startsWith("/signup") ? from : "/";
+}
+
+/** Send a signed-out shopper to the login page, returning them here afterwards. */
+export function useRequireLogin() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return (message = "Please sign in to continue") => {
+    toast.info(message);
+    navigate("/login", { state: { from: location.pathname + location.search } });
+  };
+}
+
 export function useLogin() {
   const navigate = useNavigate();
+  const returnTo = useReturnTo();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   return useMutation({
@@ -37,7 +55,7 @@ export function useLogin() {
       const { user, accessToken, refreshToken } = res.data;
       setAuth(user, accessToken, refreshToken);
       toast.success(`Welcome back, ${user.firstName}!`);
-      navigate("/");
+      navigate(returnTo, { replace: true });
     },
     onError: (error: ApiError) => {
       toast.error(error.message || "Login failed");
@@ -47,6 +65,7 @@ export function useLogin() {
 
 export function useRegister() {
   const navigate = useNavigate();
+  const returnTo = useReturnTo();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   return useMutation({
@@ -62,7 +81,7 @@ export function useRegister() {
       const { user, accessToken, refreshToken } = res.data;
       setAuth(user, accessToken, refreshToken);
       toast.success("Account created! Welcome to Amma Indian Grocery!");
-      navigate("/");
+      navigate(returnTo, { replace: true });
     },
     onError: (error: ApiError) => {
       toast.error(error.message || "Registration failed");

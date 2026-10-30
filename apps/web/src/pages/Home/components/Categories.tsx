@@ -5,7 +5,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 
 import { HiChevronLeft, HiChevronRight, HiArrowRight } from "react-icons/hi";
-import { useCategories, type Category } from "../../../hooks/use-categories";
+import { useCategories, useFeaturedCategories, type Category } from "../../../hooks/use-categories";
 
 import veg from "../../../assets/Images/Homepage/Vegetable.png";
 import fruit from "../../../assets/Images/Homepage/Fruit.png";
@@ -13,33 +13,15 @@ import dairy from "../../../assets/Images/Homepage/Dairy products.png";
 import bakery from "../../../assets/Images/Homepage/bakery.png";
 import cleaning from "../../../assets/Images/Homepage/house hold.png";
 import dryfruits from "../../../assets/Images/Homepage/dry fruits.png";
-import vegBag from "../../../assets/Images/Homepage/veg_bag.png";
-import fruitsBag from "../../../assets/Images/Homepage/fresh_fruit.png";
+import { useBanners } from "../../../hooks/use-content";
 
-const promoCards = [
-  {
-    badgeText: "Flat 20% Discount",
-    title: "Purely Fresh Vegetables",
-    subtitle: "Freshness you can trust, Prices you'll love",
-    buttonText: "Shop Now",
-    link: "/categories/vegetables",
-    img: vegBag,
-    bgColor: "#F7F7F7",
-    badgeColor: "#F8C41A",
-  },
-  {
-    badgeText: "Flat 25% Discount",
-    title: "Fresh Fruits, Pure Quality",
-    subtitle: "Freshness you can trust, Prices you'll love",
-    buttonText: "Shop Now",
-    link: "/categories/fruits",
-    img: fruitsBag,
-    bgColor: "#F8C41A",
-    badgeColor: "#FCE496",
-  },
+// Alternating card colours for admin-managed promo banners
+const promoStyles = [
+  { bgColor: "#F7F7F7", badgeColor: "#F8C41A" },
+  { bgColor: "#F8C41A", badgeColor: "#FCE496" },
 ];
 
-// Fallback images for categories that don't have images from the API
+// Built-in icons for the starter categories, used until an image is uploaded in the admin
 const categoryImageMap: Record<string, string> = {
   vegetables: veg,
   fruits: fruit,
@@ -58,18 +40,6 @@ const categoryImageMap: Record<string, string> = {
   snacks: bakery,
 };
 
-// Static fallback data when API is unavailable
-const fallbackCategories = [
-  { name: "Vegetables", slug: "vegetables", img: veg, count: 20 },
-  { name: "Fresh Fruits", slug: "fresh-fruits", img: fruit, count: 48 },
-  { name: "Milk & Eggs", slug: "milk-eggs", img: dairy, count: 24 },
-  { name: "Bakery", slug: "bakery", img: bakery, count: 62 },
-  { name: "House Hold", slug: "house-hold", img: cleaning, count: 25 },
-  { name: "Dry Fruits", slug: "dry-fruits", img: dryfruits, count: 8 },
-  { name: "Spices", slug: "spices", img: veg, count: 35 },
-  { name: "Grains & Rice", slug: "grains-rice", img: fruit, count: 18 },
-];
-
 function getCategoryImage(cat: Category): string {
   if (cat.image) return cat.image;
   const key = cat.slug.toLowerCase();
@@ -77,16 +47,20 @@ function getCategoryImage(cat: Category): string {
 }
 
 const Categories = () => {
-  const { data: apiCategories, isError } = useCategories();
+  const { data: featured, isLoading: featuredLoading } = useFeaturedCategories();
+  const { data: all, isLoading: allLoading } = useCategories();
+  const { data: banners } = useBanners("home_promo");
 
-  const categories = apiCategories && !isError
-    ? apiCategories.map((cat) => ({
-        name: cat.name,
-        slug: cat.slug,
-        img: getCategoryImage(cat),
-        count: cat._count?.products ?? 0,
-      }))
-    : fallbackCategories;
+  // Categories starred in the admin; if none are starred, show all visible ones
+  const source = featured && featured.length > 0 ? featured : all || [];
+  const categories = source.map((cat) => ({
+    name: cat.name,
+    slug: cat.slug,
+    img: getCategoryImage(cat),
+    count: cat._count?.products ?? 0,
+  }));
+  const loading = featuredLoading || (allLoading && !(featured && featured.length));
+  const promoCards = (banners || []).slice(0, 2);
 
   return (
     <section className="w-full py-16 bg-white select-none">
@@ -117,6 +91,17 @@ const Categories = () => {
         </button>
 
         {/* Swiper */}
+        {loading && (
+          <div className="flex gap-6 justify-center">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="w-[120px] h-[120px] md:w-[170px] md:h-[170px] rounded-full bg-background-secondary animate-pulse" />
+            ))}
+          </div>
+        )}
+        {!loading && categories.length === 0 && (
+          <p className="text-center text-text-300">Categories are coming soon.</p>
+        )}
+        {categories.length > 0 && (
         <Swiper
           modules={[Navigation, Autoplay]}
           navigation={{
@@ -124,7 +109,7 @@ const Categories = () => {
             prevEl: ".swiper-prev",
           }}
           autoplay={{ delay: 2500, disableOnInteraction: false }}
-          loop={true}
+          loop={categories.length > 6}
           breakpoints={{
             320: { slidesPerView: 2.3, spaceBetween: 16 },
             480: { slidesPerView: 3, spaceBetween: 18 },
@@ -146,34 +131,55 @@ const Categories = () => {
                 {/* Text */}
                 <div className="text-center mt-4">
                   <p className="text-smtitle font-medium text-text-500 group-hover:text-green-600 transition">{cat.name}</p>
-                  <span className="text-label text-text-300">{cat.count} Items</span>
+                  <span className="text-label text-text-300">{cat.count} {cat.count === 1 ? "Item" : "Items"}</span>
                 </div>
               </Link>
             </SwiperSlide>
           ))}
         </Swiper>
+        )}
       </div>
 
-      {/* Promo Cards */}
-      <div className="container mx-auto px-3 md:px-6 grid grid-cols-1 lg:grid-cols-2 gap-5 md:gap-10 mt-6 md:mt-10">
+      {/* Promo cards — managed in Admin → Banners; hidden when there are none */}
+      {promoCards.length > 0 && (
+      <div className={`container mx-auto px-3 md:px-6 grid grid-cols-1 ${promoCards.length > 1 ? "lg:grid-cols-2" : ""} gap-5 md:gap-10 mt-6 md:mt-10`}>
 
-        {promoCards.map((card, index) => (
-          <Link
-            key={index}
-            to={card.link}
-            className="relative w-full min-h-[220px] md:min-h-[380px] rounded-xl md:rounded-2xl flex items-center justify-between gap-4 md:gap-8 p-4 md:p-12 overflow-hidden"
-            style={{ background: card.bgColor }}
-          >
+        {promoCards.map((banner, index) => {
+          const style = promoStyles[index % promoStyles.length];
+          const card = {
+            badgeText: "",
+            title: banner.title,
+            subtitle: banner.subtitle || "",
+            buttonText: "Shop Now",
+            link: banner.link || "/all-categories",
+            img: banner.image,
+            ...style,
+          };
+          const external = /^https?:\/\//.test(card.link);
+          const Wrapper = ({ children }: { children: React.ReactNode }) =>
+            external ? (
+              <a href={card.link} target="_blank" rel="noopener noreferrer" className="relative w-full min-h-[220px] md:min-h-[380px] rounded-xl md:rounded-2xl flex items-center justify-between gap-4 md:gap-8 p-4 md:p-12 overflow-hidden" style={{ background: card.bgColor }}>
+                {children}
+              </a>
+            ) : (
+              <Link to={card.link} className="relative w-full min-h-[220px] md:min-h-[380px] rounded-xl md:rounded-2xl flex items-center justify-between gap-4 md:gap-8 p-4 md:p-12 overflow-hidden" style={{ background: card.bgColor }}>
+                {children}
+              </Link>
+            );
+          return (
+          <Wrapper key={banner.id}>
             {/* LEFT CONTENT */}
             <div className="flex flex-col gap-2 md:gap-4 max-w-[180px] md:max-w-[320px]">
 
               {/* Badge */}
+              {card.badgeText && (
               <span
                 className="px-3 py-1.5 md:px-5 md:py-2 rounded-full text-xs md:text-label font-normal w-fit"
                 style={{ background: card.badgeColor }}
               >
                 {card.badgeText}
               </span>
+              )}
 
               {/* Title */}
               <h3 className="text-base md:text-h4 lg:text-h3 font-medium text-text-500 leading-tight">
@@ -181,9 +187,11 @@ const Categories = () => {
               </h3>
 
               {/* Subtitle */}
+              {card.subtitle && (
               <p className="text-xs md:text-caption text-text-400 leading-snug">
                 {card.subtitle}
               </p>
+              )}
 
               {/* CTA */}
               <span className="group flex items-center gap-2 md:gap-3 bg-green-500 hover:bg-green-600 transition-colors duration-200 text-white px-4 md:px-6 h-9 md:h-12 rounded-full text-sm md:text-base font-medium w-fit min-w-[100px] md:min-w-[160px]">
@@ -200,10 +208,12 @@ const Categories = () => {
                 className="max-w-[160px] md:max-w-[380px] w-full h-full object-contain pointer-events-none select-none"
               />
             </div>
-          </Link>
-        ))}
+          </Wrapper>
+          );
+        })}
 
       </div>
+      )}
 
     </section>
   );

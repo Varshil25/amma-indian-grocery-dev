@@ -27,7 +27,7 @@ export default function Login() {
   });
 
   const onSubmit = (data: LoginForm) => {
-    loginMutation.mutate(data);
+    loginMutation.mutate(data as { email: string; password: string });
   };
 
   return (

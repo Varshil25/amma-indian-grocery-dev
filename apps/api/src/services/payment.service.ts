@@ -28,6 +28,10 @@ export class PaymentService {
       throw new BadRequestError("Order is not in a payable state");
     }
 
+    if (order.payment && order.payment.method === "CASH_ON_DELIVERY") {
+      throw new BadRequestError("This order is set to be paid on delivery/pickup");
+    }
+
     // If payment already exists, return existing client secret
     if (order.payment?.stripeClientSecret) {
       return {
@@ -67,7 +71,10 @@ export class PaymentService {
     };
   }
 
-  async handleWebhook(rawBody: Buffer, signature: string) {
+  async handleWebhook(rawBody: Buffer | undefined, signature: string | undefined) {
+    if (!rawBody || !signature) {
+      throw new BadRequestError("Missing webhook body or signature");
+    }
     if (!stripe || !env.STRIPE_WEBHOOK_SECRET) {
       throw new BadRequestError("Webhook not configured");
     }
@@ -107,7 +114,7 @@ export class PaymentService {
       where: { stripePaymentId },
     });
 
-    if (!payment) return;
+    if (!payment || payment.status === PaymentStatus.COMPLETED) return;
 
     await prisma.payment.update({
       where: { id: payment.id },

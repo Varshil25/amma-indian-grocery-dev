@@ -98,8 +98,8 @@ export class UserService {
   }
 
   async addAddress(userId: string, data: {
-    firstName: string;
-    lastName: string;
+    firstName?: string;
+    lastName?: string;
     label?: string;
     addressLine1: string;
     addressLine2?: string;
@@ -109,6 +109,11 @@ export class UserService {
     phone?: string;
     isDefault?: boolean;
   }) {
+    if (!data.firstName || !data.lastName) {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } });
+      data = { ...data, firstName: data.firstName || user?.firstName || "", lastName: data.lastName || user?.lastName || "" };
+    }
+
     // If this is set as default, unset other defaults
     if (data.isDefault) {
       await prisma.address.updateMany({
@@ -124,7 +129,7 @@ export class UserService {
     }
 
     return prisma.address.create({
-      data: { ...data, userId },
+      data: { ...data, firstName: data.firstName as string, lastName: data.lastName as string, userId },
     });
   }
 
@@ -167,6 +172,12 @@ export class UserService {
       throw new NotFoundError("Address not found");
     }
 
+    const usedOnOrders = await prisma.order.count({ where: { addressId } });
+    if (usedOnOrders > 0) {
+      throw new BadRequestError(
+        "This address is on past orders, so it can't be deleted. Add a new address and make it your default instead."
+      );
+    }
     await prisma.address.delete({ where: { id: addressId } });
 
     // If deleted was default, make the most recent one default

@@ -3,28 +3,15 @@ import PageHeader from "../../components/PageHeader";
 import SEO from "../../components/SEO";
 import { HiMinus, HiPlus } from "react-icons/hi";
 import { AiFillStar } from "react-icons/ai";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useProductDetail } from "../../hooks/use-products";
 import { useAddToCart } from "../../hooks/use-cart";
 import { useCartUIStore } from "../../stores/cart-ui-store";
 import { useAuthStore } from "../../stores/auth-store";
 import ProductCard from "./ProductCard";
-import { mapProductToCard } from "../../lib/product-helpers";
-
-// Fallback
-import orange from "../../assets/Images/Homepage/orange.png";
-
-const mockProduct = {
-  category: "Vegetables & Fruits",
-  title: "Fresh Oranges",
-  price: 8.0,
-  oldPrice: 10.0,
-  rating: 4.8,
-  weight: "1.0 kg",
-  description:
-    "Freshness you can trust, prices you'll love, everything you need, all in one place.",
-  image: orange,
-};
+import { mapProductToCard, PLACEHOLDER_IMAGE, formatUnit } from "../../lib/product-helpers";
+import { useRequireLogin } from "../../hooks/use-auth";
+import { ApiError } from "../../lib/api-client";
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams();
@@ -33,8 +20,9 @@ const ProductDetails: React.FC = () => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const addToCart = useAddToCart();
   const openDrawer = useCartUIStore((s) => s.openDrawer);
+  const requireLogin = useRequireLogin();
 
-  const { data, isLoading, isError } = useProductDetail(productId || "");
+  const { data, isLoading, isError, error, refetch } = useProductDetail(productId || "");
 
   const product = data?.product;
   const relatedProducts = data?.relatedProducts || [];
@@ -59,45 +47,44 @@ const ProductDetails: React.FC = () => {
   }
 
   if (isError || !product) {
+    const notFound = !isError || (error instanceof ApiError && error.status === 404);
     return (
       <>
         <PageHeader
-          title={mockProduct.title}
-          breadcrumbs={[
-            { label: "Home", href: "/" },
-            { label: mockProduct.category },
-            { label: mockProduct.title },
-          ]}
+          title={notFound ? "Product not found" : "Something went wrong"}
+          breadcrumbs={[{ label: "Home", href: "/" }, { label: "Product" }]}
         />
-        <div className="container mx-auto px-4 py-14">
-          <div className="flex flex-col lg:flex-row gap-10 justify-between">
-            <div className="w-full lg:w-[480px]">
-              <img src={mockProduct.image} alt={mockProduct.title} className="w-full h-[480px] object-contain border border-text-50 rounded-xl bg-white p-4" />
-            </div>
-            <div className="w-full lg:w-[590px]">
-              <p className="text-green-700 text-base mb-2">{mockProduct.category}</p>
-              <h1 className="text-4xl md:text-5xl font-semibold text-text-500 mb-3">{mockProduct.title}</h1>
-              <div className="flex items-center gap-4 mb-6">
-                <span className="text-2xl font-semibold text-text-500">${mockProduct.price.toFixed(2)}</span>
-                <span className="text-2xl line-through text-text-200">${mockProduct.oldPrice.toFixed(2)}</span>
-              </div>
-              <p className="text-text-300 text-lg mb-6">{mockProduct.description}</p>
-              <button className="w-full h-[55px] bg-green-50 border border-green-700 text-green-700 text-lg font-medium rounded-xl hover:bg-green-700 hover:text-white transition">Add to Cart</button>
-            </div>
-          </div>
+        <div className="container mx-auto px-4 py-20 text-center">
+          <p className="text-text-300 text-body-lg mb-6">
+            {notFound
+              ? "This product isn't available any more, or the link is wrong."
+              : (error as Error)?.message || "We couldn't load this product right now."}
+          </p>
+          {notFound ? (
+            <Link to="/all-categories" className="btn-primary inline-block">
+              Browse products
+            </Link>
+          ) : (
+            <button onClick={() => refetch()} className="btn-primary">
+              Try again
+            </button>
+          )}
         </div>
       </>
     );
   }
 
   const images = product.images || [];
-  const primaryImage = images[selectedImage]?.url || orange;
+  const primaryImage = images[selectedImage]?.url || PLACEHOLDER_IMAGE;
   const price = parseFloat(product.price);
   const compareAtPrice = product.compareAtPrice ? parseFloat(product.compareAtPrice) : null;
   const rating = parseFloat(product.avgRating) || 0;
-  const inStock = product.inventory
-    ? product.inventory.stockQuantity - product.inventory.reservedQuantity > 0
-    : true;
+  const available = product.inventory
+    ? product.inventory.stockQuantity - product.inventory.reservedQuantity
+    : 99;
+  const inStock = available > 0;
+  const maxQty = Math.max(1, Math.min(99, available));
+  const unitLabel = formatUnit(product.unit, product.unitValue);
 
   return (
     <>
@@ -146,6 +133,9 @@ const ProductDetails: React.FC = () => {
           <div className="w-full lg:w-[590px]">
             <p className="text-green-700 text-base font-normal mb-2">{product.category.name}</p>
             <h1 className="text-4xl md:text-5xl font-semibold text-text-500 mb-3">{product.name}</h1>
+            {(product.brand || unitLabel) && (
+              <p className="text-text-300 text-lg mb-3">{[product.brand, unitLabel].filter(Boolean).join(" · ")}</p>
+            )}
 
             <div className="flex items-center gap-2 mb-4">
               {Array(5).fill(null).map((_, i) => (
@@ -160,21 +150,23 @@ const ProductDetails: React.FC = () => {
 
             <div className="flex items-center gap-4 mb-6">
               <span className="text-2xl font-semibold text-text-500">${price.toFixed(2)}</span>
-              {compareAtPrice && (
+              {compareAtPrice && compareAtPrice > price && (
                 <span className="text-2xl font-medium line-through text-text-200">${compareAtPrice.toFixed(2)}</span>
               )}
-              {compareAtPrice && (
+              {compareAtPrice && compareAtPrice > price && (
                 <span className="bg-green-100 text-green-700 text-body-sm font-medium px-3 py-1 rounded-full">
                   {Math.round(((compareAtPrice - price) / compareAtPrice) * 100)}% off
                 </span>
               )}
             </div>
 
-            {!inStock && (
+            {!inStock ? (
               <div className="mb-4">
                 <span className="bg-red-100 text-red-700 text-body-sm font-medium px-3 py-1 rounded-full">Out of Stock</span>
               </div>
-            )}
+            ) : available <= 5 ? (
+              <p className="mb-4 text-orange-600 text-body-sm font-medium">Only {available} left</p>
+            ) : null}
 
             {product.description && (
               <p className="text-text-300 text-lg leading-relaxed mb-6">{product.description}</p>
@@ -191,11 +183,20 @@ const ProductDetails: React.FC = () => {
             )}
 
             <div className="flex items-center gap-4 mb-8">
-              <button className="w-10 h-10 border border-text-100 rounded flex items-center justify-center bg-background-secondary hover:bg-text-50" onClick={() => setQty(qty > 1 ? qty - 1 : 1)}>
+              <button
+                className="w-10 h-10 border border-text-100 rounded flex items-center justify-center bg-background-secondary hover:bg-text-50"
+                aria-label="Decrease quantity"
+                onClick={() => setQty(qty > 1 ? qty - 1 : 1)}
+              >
                 <HiMinus className="text-text-300" size={20} />
               </button>
               <span className="text-2xl font-semibold text-green-700">{qty}</span>
-              <button className="w-10 h-10 border border-text-100 rounded flex items-center justify-center bg-background-secondary hover:bg-text-50" onClick={() => setQty(qty + 1)}>
+              <button
+                className="w-10 h-10 border border-text-100 rounded flex items-center justify-center bg-background-secondary hover:bg-text-50 disabled:opacity-40"
+                disabled={qty >= maxQty}
+                aria-label="Increase quantity"
+                onClick={() => setQty(Math.min(maxQty, qty + 1))}
+              >
                 <HiPlus className="text-green-700" size={20} />
               </button>
             </div>
@@ -203,7 +204,8 @@ const ProductDetails: React.FC = () => {
             <button
               disabled={!inStock || addToCart.isPending}
               onClick={() => {
-                if (!isAuthenticated || !product) return;
+                if (!product) return;
+                if (!isAuthenticated) return requireLogin("Sign in to add items to your cart");
                 addToCart.mutate(
                   { productId: product.id, quantity: qty },
                   { onSuccess: () => openDrawer() }

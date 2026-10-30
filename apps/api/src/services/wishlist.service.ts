@@ -13,7 +13,7 @@ const wishlistProductSelect = {
   avgRating: true,
   reviewCount: true,
   images: {
-    where: { isPrimary: true },
+    orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }],
     select: { url: true, altText: true },
     take: 1,
   },

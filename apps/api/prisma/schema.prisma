@@ -151,6 +151,10 @@ model Product {
   unitValue        Decimal?
   price            Decimal  @db.Decimal(10, 2)
   compareAtPrice   Decimal? @db.Decimal(10, 2)
+  // While a Hot Deal is applied, price/compareAtPrice hold the deal values and the
+  // regular values are parked here so they can be restored when the deal ends.
+  basePrice           Decimal? @db.Decimal(10, 2)
+  baseCompareAtPrice  Decimal? @db.Decimal(10, 2)
   costPrice        Decimal? @db.Decimal(10, 2)
   taxRate          Decimal? @db.Decimal(5, 2)
   isTaxable        Boolean  @default(true)
@@ -712,6 +716,16 @@ model ContactMessage {
   subject   String?
   message   String
   isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// Images uploaded from the admin panel. Stored in the database so they survive
+// redeploys on hosts with an ephemeral filesystem; served from /api/media/:id.
+model MediaFile {
+  id        String   @id @default(cuid())
+  mimeType  String
+  size      Int
+  data      Bytes
   createdAt DateTime @default(now())
 }
 

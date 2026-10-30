@@ -532,7 +532,8 @@ export class PosService {
         if (product) {
           await prisma.product.update({
             where: { id: product.id },
-            data: { price: fromCents(newPrice) },
+            // While a Hot Deal runs, Square's price is the regular price (parked in basePrice)
+            data: product.basePrice !== null ? { basePrice: fromCents(newPrice) } : { price: fromCents(newPrice) },
           });
           updatedCount++;
         }
@@ -548,7 +549,8 @@ export class PosService {
           if (product) {
             await prisma.product.update({
               where: { id: product.id },
-              data: { price: fromCents(newPrice) },
+              // While a Hot Deal runs, Square's price is the regular price (parked in basePrice)
+            data: product.basePrice !== null ? { basePrice: fromCents(newPrice) } : { price: fromCents(newPrice) },
             });
             updatedCount++;
           }

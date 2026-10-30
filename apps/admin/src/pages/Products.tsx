@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Search,
   Package,
@@ -11,234 +12,310 @@ import {
   Plus,
   Pencil,
   Trash2,
-  X,
+  RotateCcw,
+  Flame,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAdminProducts,
+  useAdminProduct,
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
   useAdminCategories,
+  type AdminCategory,
 } from "../hooks/use-admin";
+import Modal, { inputClass, labelClass, primaryBtn, secondaryBtn } from "../components/Modal";
+import ImageInput from "../components/ImageInput";
+import { slugify, money, errorMessage } from "../lib/utils";
 
 interface ProductForm {
   name: string;
   slug: string;
   sku: string;
+  barcode: string;
   description: string;
+  shortDescription: string;
   categoryId: string;
   brand: string;
   unit: string;
+  unitValue: string;
   price: string;
   compareAtPrice: string;
   costPrice: string;
+  tags: string;
+  images: string[];
+  initialStock: string;
+  lowStockThreshold: string;
   isFeatured: boolean;
   isActive: boolean;
+  isOnSale: boolean;
+  isPerishable: boolean;
 }
 
 const emptyForm: ProductForm = {
   name: "",
   slug: "",
   sku: "",
+  barcode: "",
   description: "",
+  shortDescription: "",
   categoryId: "",
   brand: "",
   unit: "each",
+  unitValue: "",
   price: "",
   compareAtPrice: "",
   costPrice: "",
+  tags: "",
+  images: [],
+  initialStock: "0",
+  lowStockThreshold: "10",
   isFeatured: false,
   isActive: true,
+  isOnSale: false,
+  isPerishable: false,
 };
 
-function slugify(text: string) {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+const UNITS = [
+  ["each", "Each"],
+  ["kg", "Kilogram (kg)"],
+  ["g", "Gram (g)"],
+  ["lb", "Pound (lb)"],
+  ["oz", "Ounce (oz)"],
+  ["l", "Liter (l)"],
+  ["ml", "Milliliter (ml)"],
+  ["pack", "Pack"],
+  ["bundle", "Bundle"],
+  ["dozen", "Dozen"],
+] as const;
+
+function flattenCategories(cats: AdminCategory[]) {
+  const out: { id: string; name: string; isChild: boolean; isActive: boolean }[] = [];
+  for (const c of cats) {
+    out.push({ id: c.id, name: c.name, isChild: false, isActive: c.isActive });
+    for (const ch of c.children || []) out.push({ id: ch.id, name: ch.name, isChild: true, isActive: ch.isActive });
+  }
+  return out;
 }
+
+const optNum = (v: string) => (v.trim() === "" ? null : Number(v));
 
 export default function Products() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [status, setStatus] = useState("");
+  const [modal, setModal] = useState<{ mode: "create" } | { mode: "edit"; id: string } | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyForm);
+  const [slugTouched, setSlugTouched] = useState(false);
 
-  const { data, isLoading } = useAdminProducts(page, search || undefined);
+  const { data, isLoading, isError, error } = useAdminProducts(page, search || undefined, status || undefined);
   const { data: categories } = useAdminCategories();
+  const editingId = modal?.mode === "edit" ? modal.id : null;
+  const { data: detail, isLoading: detailLoading } = useAdminProduct(editingId);
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearch(searchInput);
-    setPage(1);
-  };
+  // Load the saved product into the form when editing
+  useEffect(() => {
+    if (!detail || detail.id !== editingId) return;
+    setForm({
+      name: detail.name,
+      slug: detail.slug,
+      sku: detail.sku,
+      barcode: detail.barcode || "",
+      description: detail.description || "",
+      shortDescription: detail.shortDescription || "",
+      categoryId: detail.categoryId,
+      brand: detail.brand || "",
+      unit: detail.unit || "each",
+      unitValue: detail.unitValue !== null ? String(detail.unitValue) : "",
+      price: String(detail.price),
+      compareAtPrice: detail.compareAtPrice !== null ? String(detail.compareAtPrice) : "",
+      costPrice: detail.costPrice !== null ? String(detail.costPrice) : "",
+      tags: detail.tags.join(", "),
+      images: detail.images.map((i) => i.url),
+      initialStock: "0",
+      lowStockThreshold: String(detail.inventory?.lowStockThreshold ?? 10),
+      isFeatured: detail.isFeatured,
+      isActive: detail.isActive,
+      isOnSale: detail.isOnSale,
+      isPerishable: detail.isPerishable,
+    });
+    setSlugTouched(true);
+  }, [detail, editingId]);
+
+  const allCategories = flattenCategories(categories || []);
 
   const openCreate = () => {
-    setEditingId(null);
-    setForm(emptyForm);
-    setShowModal(true);
+    setForm({ ...emptyForm, categoryId: "" });
+    setSlugTouched(false);
+    setModal({ mode: "create" });
   };
 
-  const openEdit = (product: {
-    id: string;
-    name: string;
-    slug: string;
-    sku: string;
-    price: number;
-    compareAtPrice: number | null;
-    category: string;
-    isActive: boolean;
-    isFeatured: boolean;
-  }) => {
-    // Find categoryId from category name
-    const allCats = flattenCategories(categories || []);
-    const cat = allCats.find((c) => c.name === product.category);
-
-    setEditingId(product.id);
-    setForm({
-      name: product.name,
-      slug: product.slug,
-      sku: product.sku,
-      description: "",
-      categoryId: cat?.id || "",
-      brand: "",
-      unit: "each",
-      price: String(product.price),
-      compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : "",
-      costPrice: "",
-      isFeatured: product.isFeatured,
-      isActive: product.isActive,
-    });
-    setShowModal(true);
+  const openEdit = (id: string) => {
+    setForm(emptyForm);
+    setModal({ mode: "edit", id });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.categoryId) return toast.error("Please choose a category");
+    const price = Number(form.price);
+    if (!(price > 0)) return toast.error("Price must be greater than 0");
+    const compareAt = optNum(form.compareAtPrice);
+    if (compareAt !== null && compareAt <= price) {
+      return toast.error("Compare-at price should be higher than the price (it's shown struck through)");
+    }
+
+    const payload: Record<string, unknown> = {
+      name: form.name.trim(),
+      slug: form.slug.trim() || slugify(form.name),
+      sku: form.sku.trim(),
+      barcode: form.barcode.trim() || null,
+      description: form.description.trim() || null,
+      shortDescription: form.shortDescription.trim() || null,
+      categoryId: form.categoryId,
+      brand: form.brand.trim() || null,
+      unit: form.unit,
+      unitValue: optNum(form.unitValue),
+      price,
+      compareAtPrice: compareAt,
+      costPrice: optNum(form.costPrice),
+      tags: form.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+      images: form.images.map((url) => ({ url })),
+      lowStockThreshold: Number(form.lowStockThreshold) || 0,
+      isFeatured: form.isFeatured,
+      isActive: form.isActive,
+      isOnSale: form.isOnSale,
+      isPerishable: form.isPerishable,
+    };
 
     if (editingId) {
-      // Only send changed fields for update
-      const payload: Record<string, unknown> = { id: editingId };
-      if (form.name) payload.name = form.name;
-      if (form.slug) payload.slug = form.slug;
-      if (form.categoryId) payload.categoryId = form.categoryId;
-      if (form.price) payload.price = parseFloat(form.price);
-      if (form.compareAtPrice) payload.compareAtPrice = parseFloat(form.compareAtPrice);
-      else payload.compareAtPrice = null;
-      if (form.costPrice) payload.costPrice = parseFloat(form.costPrice);
-      if (form.brand) payload.brand = form.brand;
-      if (form.unit) payload.unit = form.unit;
-      if (form.description) payload.description = form.description;
-      payload.isFeatured = form.isFeatured;
-      payload.isActive = form.isActive;
-
-      updateProduct.mutate(payload as { id: string; [key: string]: unknown }, {
-        onSuccess: () => {
-          toast.success("Product updated — price synced to POS if linked");
-          setShowModal(false);
-        },
-        onError: () => toast.error("Failed to update product"),
-      });
+      updateProduct.mutate(
+        { id: editingId, ...payload },
+        {
+          onSuccess: () => {
+            toast.success("Product updated");
+            setModal(null);
+          },
+          onError: (err) => toast.error(errorMessage(err, "Failed to update product")),
+        }
+      );
     } else {
-      const payload = {
-        name: form.name,
-        slug: form.slug || slugify(form.name),
-        sku: form.sku,
-        description: form.description || undefined,
-        categoryId: form.categoryId || undefined,
-        brand: form.brand || undefined,
-        unit: form.unit || "each",
-        price: parseFloat(form.price),
-        compareAtPrice: form.compareAtPrice ? parseFloat(form.compareAtPrice) : undefined,
-        costPrice: form.costPrice ? parseFloat(form.costPrice) : undefined,
-        isFeatured: form.isFeatured,
-        isActive: form.isActive,
-      };
-
+      payload.initialStock = Math.max(0, parseInt(form.initialStock) || 0);
       createProduct.mutate(payload, {
         onSuccess: () => {
           toast.success("Product created");
-          setShowModal(false);
-          setForm(emptyForm);
+          setModal(null);
         },
-        onError: () => toast.error("Failed to create product"),
+        onError: (err) => toast.error(errorMessage(err, "Failed to create product")),
       });
     }
   };
 
-  const handleDelete = (id: string, name: string) => {
-    if (!confirm(`Deactivate product "${name}"? It will be hidden from the store.`)) return;
+  const handleDeactivate = (id: string, name: string) => {
+    if (!confirm(`Hide "${name}" from the store? You can reactivate it later.`)) return;
     deleteProduct.mutate(id, {
-      onSuccess: () => toast.success("Product deactivated"),
-      onError: () => toast.error("Failed to deactivate product"),
+      onSuccess: () => toast.success("Product hidden from the store"),
+      onError: (err) => toast.error(errorMessage(err, "Failed to deactivate product")),
     });
   };
 
-  const isPending = createProduct.isPending || updateProduct.isPending;
-
-  // Flatten nested categories for the select dropdown
-  function flattenCategories(cats: { id: string; name: string; children?: { id: string; name: string }[] }[]): { id: string; name: string; isChild?: boolean }[] {
-    const result: { id: string; name: string; isChild?: boolean }[] = [];
-    for (const cat of cats) {
-      result.push({ id: cat.id, name: cat.name });
-      if (cat.children) {
-        for (const child of cat.children) {
-          result.push({ id: child.id, name: child.name, isChild: true });
-        }
+  const handleReactivate = (id: string) => {
+    updateProduct.mutate(
+      { id, isActive: true },
+      {
+        onSuccess: () => toast.success("Product is live again"),
+        onError: (err) => toast.error(errorMessage(err)),
       }
-    }
-    return result;
-  }
+    );
+  };
 
-  const allCategories = flattenCategories(categories || []);
+  const isPending = createProduct.isPending || updateProduct.isPending;
+  const set = (patch: Partial<ProductForm>) => setForm((f) => ({ ...f, ...patch }));
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">Products</h2>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-        >
+        <button onClick={openCreate} className={`${primaryBtn} flex items-center gap-1.5`}>
           <Plus size={16} /> Add Product
         </button>
       </div>
 
-      {/* Search Bar */}
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="relative flex-1 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by name or SKU..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
-          />
+      {categories && categories.length === 0 && (
+        <div className="text-sm bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg px-4 py-3">
+          You need at least one category before adding products.{" "}
+          <Link to="/categories" className="font-medium underline">
+            Create a category
+          </Link>
         </div>
-        <button type="submit" className="px-4 py-2 text-sm font-medium bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
-          Search
-        </button>
-        {search && (
-          <button
-            type="button"
-            onClick={() => { setSearch(""); setSearchInput(""); setPage(1); }}
-            className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-          >
-            Clear
-          </button>
-        )}
-      </form>
+      )}
 
-      {/* Table */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setSearch(searchInput.trim());
+            setPage(1);
+          }}
+          className="flex gap-2 flex-1 min-w-[260px] max-w-xl"
+        >
+          <div className="relative flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name, SKU or brand..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className={`${inputClass} pl-9`}
+            />
+          </div>
+          <button type="submit" className={primaryBtn}>
+            Search
+          </button>
+          {search && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch("");
+                setSearchInput("");
+                setPage(1);
+              }}
+              className={secondaryBtn}
+            >
+              Clear
+            </button>
+          )}
+        </form>
+        <select
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
+          className={`${inputClass} w-auto`}
+          aria-label="Filter by status"
+        >
+          <option value="">All products</option>
+          <option value="active">Active only</option>
+          <option value="inactive">Hidden only</option>
+        </select>
+      </div>
+
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 animate-spin text-green-500" />
           </div>
+        ) : isError ? (
+          <p className="px-4 py-12 text-center text-red-600 text-sm">{errorMessage(error, "Couldn't load products")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -248,7 +325,7 @@ export default function Products() {
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">SKU</th>
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Category</th>
                   <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Price</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Stock</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Available</th>
                   <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
                   <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">Featured</th>
                   <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -261,7 +338,7 @@ export default function Products() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                           {product.image ? (
-                            <img src={product.image} alt={product.name} className="w-full h-full object-contain p-0.5" />
+                            <img src={product.image} alt="" className="w-full h-full object-contain p-0.5" />
                           ) : (
                             <Package size={16} className="text-gray-400" />
                           )}
@@ -271,15 +348,22 @@ export default function Products() {
                     </td>
                     <td className="px-4 py-3 text-gray-500 font-mono text-xs">{product.sku}</td>
                     <td className="px-4 py-3 text-gray-600">{product.category}</td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="font-medium text-gray-900">${product.price.toFixed(2)}</span>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      {product.inDeal && (
+                        <Flame size={12} className="inline text-orange-500 mr-1" aria-label="Hot deal price" />
+                      )}
+                      <span className="font-medium text-gray-900">{money(product.price)}</span>
                       {product.compareAtPrice && (
-                        <span className="text-xs text-gray-400 line-through ml-1">${product.compareAtPrice.toFixed(2)}</span>
+                        <span className="text-xs text-gray-400 line-through ml-1">{money(product.compareAtPrice)}</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {product.stock !== null ? (
-                        <span className={`font-medium ${product.stock <= 0 ? "text-red-600" : product.stock <= 10 ? "text-orange-600" : "text-gray-900"}`}>
+                        <span
+                          className={`font-medium ${
+                            product.stock <= 0 ? "text-red-600" : product.stock <= 10 ? "text-orange-600" : "text-gray-900"
+                          }`}
+                        >
                           {product.stock}
                         </span>
                       ) : (
@@ -293,7 +377,7 @@ export default function Products() {
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                          <EyeOff size={12} /> Draft
+                          <EyeOff size={12} /> Hidden
                         </span>
                       )}
                     </td>
@@ -302,19 +386,42 @@ export default function Products() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => openEdit(product)} className="text-blue-500 hover:text-blue-600 p-1" title="Edit">
+                        <button
+                          onClick={() => openEdit(product.id)}
+                          className="text-blue-500 hover:text-blue-600 p-1"
+                          title="Edit"
+                          aria-label={`Edit ${product.name}`}
+                        >
                           <Pencil size={15} />
                         </button>
-                        <button onClick={() => handleDelete(product.id, product.name)} className="text-red-500 hover:text-red-600 p-1" title="Deactivate">
-                          <Trash2 size={15} />
-                        </button>
+                        {product.isActive ? (
+                          <button
+                            onClick={() => handleDeactivate(product.id, product.name)}
+                            className="text-red-500 hover:text-red-600 p-1"
+                            title="Hide from store"
+                            aria-label={`Hide ${product.name}`}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleReactivate(product.id)}
+                            className="text-green-600 hover:text-green-700 p-1"
+                            title="Reactivate"
+                            aria-label={`Reactivate ${product.name}`}
+                          >
+                            <RotateCcw size={15} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
                 ))}
                 {data?.products.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-gray-400">No products found</td>
+                    <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
+                      {search || status ? "No products match" : "No products yet — click Add Product to create your first one"}
+                    </td>
                   </tr>
                 )}
               </tbody>
@@ -322,7 +429,6 @@ export default function Products() {
           </div>
         )}
 
-        {/* Pagination */}
         {data && data.pagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
             <p className="text-xs text-gray-500">
@@ -330,11 +436,23 @@ export default function Products() {
               {Math.min(data.pagination.page * data.pagination.limit, data.pagination.total)} of {data.pagination.total}
             </p>
             <div className="flex items-center gap-1">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40"
+                aria-label="Previous page"
+              >
                 <ChevronLeft size={16} />
               </button>
-              <span className="text-sm text-gray-700 px-2">{page} / {data.pagination.totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(data.pagination.totalPages, p + 1))} disabled={page === data.pagination.totalPages} className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed">
+              <span className="text-sm text-gray-700 px-2">
+                {page} / {data.pagination.totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(data.pagination.totalPages, p + 1))}
+                disabled={page === data.pagination.totalPages}
+                className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-40"
+                aria-label="Next page"
+              >
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -342,208 +460,306 @@ export default function Products() {
         )}
       </div>
 
-      {/* Create / Edit Modal */}
-      {showModal && (
-        <>
-          <div className="fixed inset-0 bg-black/40 z-[80]" onClick={() => setShowModal(false)} />
-          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl p-6 z-[90] shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900">
-                {editingId ? "Edit Product" : "New Product"}
-              </h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={18} />
-              </button>
+      {modal && (
+        <Modal title={editingId ? "Edit Product" : "New Product"} onClose={() => setModal(null)} size="xl">
+          {editingId && detailLoading ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="w-6 h-6 animate-spin text-green-500" />
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {/* Name */}
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Product Name</label>
+                <label className={labelClass} htmlFor="p-name">
+                  Product name *
+                </label>
                 <input
+                  id="p-name"
                   required
                   value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value, slug: editingId ? form.slug : slugify(e.target.value) })}
-                  placeholder="e.g. Basmati Rice 5kg"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                  onChange={(e) => set({ name: e.target.value, ...(slugTouched ? {} : { slug: slugify(e.target.value) }) })}
+                  placeholder="e.g. Basmati Rice 5 lb"
+                  className={inputClass}
                 />
               </div>
 
-              {/* SKU + Slug */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">SKU</label>
+                  <label className={labelClass} htmlFor="p-sku">
+                    SKU *
+                  </label>
                   <input
-                    required={!editingId}
+                    id="p-sku"
+                    required
                     value={form.sku}
-                    onChange={(e) => setForm({ ...form, sku: e.target.value })}
-                    placeholder="e.g. RICE-BAS-5KG"
-                    disabled={!!editingId}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 font-mono disabled:bg-gray-50 disabled:text-gray-400"
+                    onChange={(e) => set({ sku: e.target.value })}
+                    placeholder="e.g. RICE-BAS-5LB"
+                    className={`${inputClass} font-mono`}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Slug (URL)</label>
+                  <label className={labelClass} htmlFor="p-barcode">
+                    Barcode
+                  </label>
                   <input
+                    id="p-barcode"
+                    value={form.barcode}
+                    onChange={(e) => set({ barcode: e.target.value })}
+                    placeholder="UPC / EAN"
+                    className={`${inputClass} font-mono`}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="p-slug">
+                    URL slug
+                  </label>
+                  <input
+                    id="p-slug"
                     value={form.slug}
-                    onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                    placeholder="auto-generated"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 font-mono"
+                    onChange={(e) => {
+                      setSlugTouched(true);
+                      set({ slug: e.target.value });
+                    }}
+                    placeholder="auto from name"
+                    className={`${inputClass} font-mono`}
                   />
                 </div>
               </div>
 
-              {/* Category + Brand */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Category</label>
+                  <label className={labelClass} htmlFor="p-category">
+                    Category *
+                  </label>
                   <select
+                    id="p-category"
+                    required
                     value={form.categoryId}
-                    onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                    onChange={(e) => set({ categoryId: e.target.value })}
+                    className={inputClass}
                   >
                     <option value="">Select category</option>
                     {allCategories.map((cat) => (
                       <option key={cat.id} value={cat.id}>
                         {cat.isChild ? `  └ ${cat.name}` : cat.name}
+                        {cat.isActive ? "" : " (hidden)"}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Brand</label>
+                  <label className={labelClass} htmlFor="p-brand">
+                    Brand
+                  </label>
                   <input
+                    id="p-brand"
                     value={form.brand}
-                    onChange={(e) => setForm({ ...form, brand: e.target.value })}
-                    placeholder="e.g. MDH, Haldiram"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                    onChange={(e) => set({ brand: e.target.value })}
+                    placeholder="e.g. MDH, Haldiram's"
+                    className={inputClass}
                   />
                 </div>
               </div>
 
-              {/* Prices */}
-              <div className="grid grid-cols-3 gap-3">
+              <ImageInput value={form.images} onChange={(images) => set({ images })} label="Images (first one is the main image)" />
+
+              {detail?.inDeal && editingId && (
+                <p className="text-xs text-orange-700 bg-orange-50 px-3 py-2 rounded-lg">
+                  <Flame size={12} className="inline mr-1" />
+                  This product is in a running Hot Deal and currently sells for {money(detail.livePrice)}. Edit the regular
+                  price below — the deal price is recalculated from it.
+                </p>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Price ($)</label>
+                  <label className={labelClass} htmlFor="p-price">
+                    {detail?.inDeal && editingId ? "Regular price ($) *" : "Price ($) *"}
+                  </label>
                   <input
+                    id="p-price"
                     required
                     type="number"
                     step="0.01"
-                    min="0"
+                    min="0.01"
                     value={form.price}
-                    onChange={(e) => setForm({ ...form, price: e.target.value })}
+                    onChange={(e) => set({ price: e.target.value })}
                     placeholder="0.00"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Compare At ($)</label>
+                  <label className={labelClass} htmlFor="p-compare">
+                    Compare-at price ($)
+                  </label>
                   <input
+                    id="p-compare"
                     type="number"
                     step="0.01"
                     min="0"
                     value={form.compareAtPrice}
-                    onChange={(e) => setForm({ ...form, compareAtPrice: e.target.value })}
-                    placeholder="Original price"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                    onChange={(e) => set({ compareAtPrice: e.target.value })}
+                    placeholder="Shown struck through"
+                    className={inputClass}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Cost ($)</label>
+                  <label className={labelClass} htmlFor="p-cost">
+                    Cost ($)
+                  </label>
                   <input
+                    id="p-cost"
                     type="number"
                     step="0.01"
                     min="0"
                     value={form.costPrice}
-                    onChange={(e) => setForm({ ...form, costPrice: e.target.value })}
-                    placeholder="Your cost"
-                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                    onChange={(e) => set({ costPrice: e.target.value })}
+                    placeholder="Your cost (private)"
+                    className={inputClass}
                   />
                 </div>
               </div>
 
-              {editingId && (
-                <p className="text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
-                  Price changes are automatically pushed to Square POS if this product is linked.
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className={labelClass} htmlFor="p-unit">
+                    Unit
+                  </label>
+                  <select id="p-unit" value={form.unit} onChange={(e) => set({ unit: e.target.value })} className={inputClass}>
+                    {UNITS.map(([v, l]) => (
+                      <option key={v} value={v}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="p-unitvalue">
+                    Size
+                  </label>
+                  <input
+                    id="p-unitvalue"
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={form.unitValue}
+                    onChange={(e) => set({ unitValue: e.target.value })}
+                    placeholder="e.g. 5"
+                    className={inputClass}
+                  />
+                </div>
+                {!editingId && (
+                  <div>
+                    <label className={labelClass} htmlFor="p-stock">
+                      Opening stock
+                    </label>
+                    <input
+                      id="p-stock"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={form.initialStock}
+                      onChange={(e) => set({ initialStock: e.target.value })}
+                      className={inputClass}
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className={labelClass} htmlFor="p-low">
+                    Low-stock alert at
+                  </label>
+                  <input
+                    id="p-low"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={form.lowStockThreshold}
+                    onChange={(e) => set({ lowStockThreshold: e.target.value })}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              {editingId && detail?.inventory && (
+                <p className="text-xs text-gray-500">
+                  In stock: {detail.inventory.stockQuantity} ({detail.inventory.reservedQuantity} reserved by open orders). Change
+                  stock levels on the{" "}
+                  <Link to="/inventory" className="underline" onClick={() => setModal(null)}>
+                    Inventory
+                  </Link>{" "}
+                  page so every change is recorded.
                 </p>
               )}
 
-              {/* Unit */}
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Unit</label>
-                <select
-                  value={form.unit}
-                  onChange={(e) => setForm({ ...form, unit: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
-                >
-                  <option value="each">Each</option>
-                  <option value="kg">Kilogram (kg)</option>
-                  <option value="lb">Pound (lb)</option>
-                  <option value="g">Gram (g)</option>
-                  <option value="oz">Ounce (oz)</option>
-                  <option value="pack">Pack</option>
-                  <option value="bundle">Bundle</option>
-                  <option value="liter">Liter</option>
-                  <option value="ml">Milliliter (ml)</option>
-                </select>
+                <label className={labelClass} htmlFor="p-short">
+                  Short description
+                </label>
+                <input
+                  id="p-short"
+                  value={form.shortDescription}
+                  onChange={(e) => set({ shortDescription: e.target.value })}
+                  maxLength={300}
+                  placeholder="One line shown in listings"
+                  className={inputClass}
+                />
               </div>
-
-              {/* Description */}
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Description</label>
+                <label className={labelClass} htmlFor="p-desc">
+                  Description
+                </label>
                 <textarea
+                  id="p-desc"
                   value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Product description..."
+                  onChange={(e) => set({ description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 resize-none"
+                  className={`${inputClass} resize-y`}
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="p-tags">
+                  Search tags (comma separated)
+                </label>
+                <input
+                  id="p-tags"
+                  value={form.tags}
+                  onChange={(e) => set({ tags: e.target.value })}
+                  placeholder="e.g. chawal, rice, long grain"
+                  className={inputClass}
                 />
               </div>
 
-              {/* Toggles */}
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.isActive}
-                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-300 text-green-500 focus:ring-green-500"
-                  />
-                  <span className="text-sm text-gray-700">Active</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.isFeatured}
-                    onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-300 text-yellow-500 focus:ring-yellow-500"
-                  />
-                  <span className="text-sm text-gray-700">Featured</span>
-                </label>
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                {(
+                  [
+                    ["isActive", "Visible in store"],
+                    ["isFeatured", "Featured on home page"],
+                    ["isOnSale", "Show in Hot Deals"],
+                    ["isPerishable", "Perishable"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={form[key]}
+                      disabled={key === "isOnSale" && !!detail?.inDeal && !!editingId}
+                      onChange={(e) => set({ [key]: e.target.checked } as Partial<ProductForm>)}
+                      className="w-4 h-4 rounded border-gray-300 text-green-500 focus:ring-green-500"
+                    />
+                    {label}
+                  </label>
+                ))}
               </div>
 
-              {/* Actions */}
               <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 py-2 text-sm font-medium border border-gray-200 rounded-lg hover:bg-gray-50"
-                >
+                <button type="button" onClick={() => setModal(null)} className={`${secondaryBtn} flex-1`}>
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  className="flex-1 py-2 text-sm font-medium bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
-                >
-                  {isPending
-                    ? editingId ? "Updating..." : "Creating..."
-                    : editingId ? "Update Product" : "Create Product"}
+                <button type="submit" disabled={isPending} className={`${primaryBtn} flex-1`}>
+                  {isPending ? "Saving…" : editingId ? "Save Changes" : "Create Product"}
                 </button>
               </div>
             </form>
-          </div>
-        </>
+          )}
+        </Modal>
       )}
     </div>
   );

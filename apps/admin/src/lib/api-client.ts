@@ -68,16 +68,22 @@ async function request<T>(
 ): Promise<T> {
   const token = localStorage.getItem("admin-token");
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers,
+      },
+    });
+  } catch {
+    throw new ApiError("Can't reach the server. Check your connection and try again.", 0);
+  }
 
-  if (res.status === 401) {
+  // A 401 from login itself means bad credentials, not an expired session
+  if (res.status === 401 && !endpoint.startsWith("/auth/")) {
     const refreshed = await refreshIfNeeded();
 
     if (refreshed) {
@@ -113,7 +119,7 @@ async function request<T>(
 
   if (!res.ok) {
     throw new ApiError(
-      data?.error?.message || `Request failed (${res.status})`,
+      data?.error?.message || (res.status === 429 ? "Too many requests — wait a moment and try again" : `Request failed (${res.status})`),
       res.status
     );
   }

@@ -80,10 +80,15 @@ class ApiClient {
       }
     }
 
-    let res = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...fetchOptions,
-      headers,
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...fetchOptions,
+        headers,
+      });
+    } catch {
+      throw new ApiError("Can't reach the store right now. Check your connection and try again.", 0);
+    }
 
     // If 401, try token refresh once
     if (res.status === 401 && !skipAuth) {
@@ -97,10 +102,14 @@ class ApiClient {
       }
     }
 
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
 
     if (!res.ok) {
-      throw new ApiError(data.message || "Request failed", res.status, data.details);
+      const message =
+        data?.error?.message ||
+        data?.message ||
+        (res.status === 429 ? "Too many requests — please wait a moment and try again" : `Request failed (${res.status})`);
+      throw new ApiError(message, res.status, data?.error?.details ?? data?.details);
     }
 
     return data;

@@ -112,6 +112,7 @@ export default function Cart() {
                             </div>
                             <button
                               onClick={() => removeMutation.mutate(item.productId)}
+                              aria-label={`Remove ${item.product.name} from cart`}
                               className="p-2 text-text-200 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
                             >
                               <Trash2 size={18} />
@@ -126,6 +127,7 @@ export default function Cart() {
                                     ? updateMutation.mutate({ productId: item.productId, quantity: item.quantity - 1 })
                                     : removeMutation.mutate(item.productId)
                                 }
+                                aria-label={`Decrease quantity of ${item.product.name}`}
                                 className="w-9 h-9 flex items-center justify-center text-text-300 hover:text-green-600 transition"
                               >
                                 <Minus size={16} />
@@ -138,6 +140,7 @@ export default function Cart() {
                                   updateMutation.mutate({ productId: item.productId, quantity: item.quantity + 1 })
                                 }
                                 disabled={item.quantity >= item.availableQty}
+                                aria-label={`Increase quantity of ${item.product.name}`}
                                 className="w-9 h-9 flex items-center justify-center text-text-300 hover:text-green-600 transition disabled:opacity-30"
                               >
                                 <Plus size={16} />

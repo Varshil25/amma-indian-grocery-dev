@@ -2,30 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useCategories } from "../../../hooks/use-categories";
 
-// Fallback images
+// Built-in icons for the starter categories, used until an image is uploaded in the admin
 import veg from "../../../assets/Images/Homepage/Vegetable.png";
 import fruit from "../../../assets/Images/Homepage/Fruit.png";
 import dairy from "../../../assets/Images/Homepage/Dairy products.png";
 import bakery from "../../../assets/Images/Homepage/bakery.png";
 import cleaning from "../../../assets/Images/Homepage/house hold.png";
 import dryfruits from "../../../assets/Images/Homepage/dry fruits.png";
-
-const fallbackCategories = [
-  { name: "Vegetables", items: "20 Items", img: veg, link: "/categories/vegetables" },
-  { name: "Fresh Fruits", items: "48 Items", img: fruit, link: "/categories/fresh-fruits" },
-  { name: "Milk & Eggs", items: "24 Items", img: dairy, link: "/categories/milk-eggs" },
-  { name: "Bakery", items: "62 Items", img: bakery, link: "/categories/bakery" },
-  { name: "House Hold", items: "25 Items", img: cleaning, link: "/categories/house-hold" },
-  { name: "Dry Fruits", items: "8 Items", img: dryfruits, link: "/categories/dry-fruits" },
-  { name: "Spices", items: "35 Items", img: veg, link: "/categories/spices" },
-  { name: "Grains & Rice", items: "18 Items", img: bakery, link: "/categories/grains-rice" },
-  { name: "Pulses & Lentils", items: "22 Items", img: cleaning, link: "/categories/pulses-lentils" },
-  { name: "Snacks", items: "30 Items", img: fruit, link: "/categories/snacks" },
-  { name: "Beverages", items: "15 Items", img: dairy, link: "/categories/beverages" },
-  { name: "Frozen Foods", items: "12 Items", img: dryfruits, link: "/categories/frozen-foods" },
-  { name: "Ready to Eat", items: "10 Items", img: bakery, link: "/categories/ready-to-eat" },
-  { name: "Personal Care", items: "14 Items", img: cleaning, link: "/categories/personal-care" },
-];
 
 const fallbackImageMap: Record<string, string> = {
   vegetables: veg,
@@ -68,17 +51,20 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ img, name, items, link }) =
 );
 
 const CategoriesSection = () => {
-  const { data: apiCategories, isError } = useCategories();
+  const { data: apiCategories, isLoading, isError, error, refetch } = useCategories();
 
-  // Map API categories to display format
-  const categories = apiCategories && !isError && apiCategories.length > 0
-    ? apiCategories.map((cat: any) => ({
+  // Top-level categories plus their subcategories
+  const categories = (apiCategories || [])
+    .flatMap((c) => [c, ...(c.children || [])])
+    .map((cat) => {
+      const n = cat._count?.products || 0;
+      return {
         name: cat.name,
-        items: `${cat._count?.products || 0} Items`,
+        items: `${n} ${n === 1 ? "Item" : "Items"}`,
         img: cat.image || getFallbackImage(cat.slug),
         link: `/categories/${cat.slug}`,
-      }))
-    : fallbackCategories;
+      };
+    });
 
   return (
     <section className="w-full bg-white py-20 select-none">
@@ -89,8 +75,26 @@ const CategoriesSection = () => {
           </h2>
         </div>
 
+        {isLoading && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-10 place-items-center">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="w-[150px] h-[150px] rounded-full bg-background-secondary animate-pulse" />
+            ))}
+          </div>
+        )}
+        {isError && (
+          <div className="text-center">
+            <p className="text-text-300 mb-4">{(error as Error)?.message || "We couldn't load categories right now."}</p>
+            <button onClick={() => refetch()} className="btn-primary">
+              Try again
+            </button>
+          </div>
+        )}
+        {!isLoading && !isError && categories.length === 0 && (
+          <p className="text-center text-text-300">Categories are coming soon.</p>
+        )}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-10 md:gap-y-14 place-items-center">
-          {categories.map((cat: any, idx: number) => (
+          {categories.map((cat, idx) => (
             <CategoryCard key={cat.link || idx} {...cat} />
           ))}
         </div>

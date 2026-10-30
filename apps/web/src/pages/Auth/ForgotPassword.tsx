@@ -26,7 +26,7 @@ export default function ForgotPassword() {
   });
 
   const onSubmit = (data: ForgotForm) => {
-    mutation.mutate(data, {
+    mutation.mutate(data as { email: string }, {
       onSuccess: () => setSubmitted(true),
     });
   };

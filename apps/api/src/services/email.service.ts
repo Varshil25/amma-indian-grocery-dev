@@ -6,13 +6,16 @@ interface EmailOptions {
   html: string;
 }
 
+const esc = (v: unknown) =>
+  String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
 export class EmailService {
   private from = env.EMAIL_FROM;
 
   async send(options: EmailOptions): Promise<void> {
     // In production, use SendGrid/Nodemailer
     // For now, log to console
-    if (env.NODE_ENV === "production" && env.SENDGRID_API_KEY) {
+    if (env.SENDGRID_API_KEY) {
       try {
         const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
           method: "POST",
@@ -48,7 +51,7 @@ export class EmailService {
     const itemRows = order.items
       .map(
         (i) =>
-          `<tr><td style="padding:8px;border-bottom:1px solid #eee">${i.productName}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">$${i.totalPrice.toFixed(2)}</td></tr>`
+          `<tr><td style="padding:8px;border-bottom:1px solid #eee">${esc(i.productName)}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td><td style="padding:8px;border-bottom:1px solid #eee;text-align:right">$${i.totalPrice.toFixed(2)}</td></tr>`
       )
       .join("");
 
@@ -61,7 +64,7 @@ export class EmailService {
             <h1 style="margin:0;font-size:24px">Order Confirmed!</h1>
           </div>
           <div style="padding:24px;background:white;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
-            <p>Hi ${order.customerName},</p>
+            <p>Hi ${esc(order.customerName)},</p>
             <p>Thank you for your order! Here's your order summary:</p>
             <p><strong>Order #${order.orderNumber}</strong></p>
             <table style="width:100%;border-collapse:collapse;margin:16px 0">
@@ -98,7 +101,7 @@ export class EmailService {
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:white;border:1px solid #e5e7eb;border-radius:8px">
           <h2 style="color:#111827">Order Update</h2>
-          <p>Hi ${data.customerName},</p>
+          <p>Hi ${esc(data.customerName)},</p>
           <p>${statusMessages[data.status] || `Your order status is now: ${data.status}`}</p>
           <p><strong>Order:</strong> #${data.orderNumber}</p>
           <p style="color:#6b7280;font-size:14px">— Amma Indian Grocery</p>
@@ -118,7 +121,7 @@ export class EmailService {
           <div style="background:#f3f4f6;padding:16px;text-align:center;border-radius:8px;margin:16px 0">
             <span style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#22c55e">${data.code}</span>
           </div>
-          <p>This code expires in 10 minutes.</p>
+          <p>This code expires in 15 minutes.</p>
           <p style="color:#6b7280;font-size:14px">If you didn't request this, please ignore this email.</p>
         </div>
       `,
@@ -134,7 +137,7 @@ export class EmailService {
           <div style="text-align:center;margin-bottom:16px">
             <h1 style="color:#22c55e;margin:0">Welcome!</h1>
           </div>
-          <p>Hi ${data.name},</p>
+          <p>Hi ${esc(data.name)},</p>
           <p>Welcome to Amma Indian Grocery! You've earned <strong>50 bonus points</strong> just for signing up.</p>
           <p>Start shopping and earn rewards with every purchase.</p>
           <p style="color:#6b7280;font-size:14px">— Amma Indian Grocery</p>

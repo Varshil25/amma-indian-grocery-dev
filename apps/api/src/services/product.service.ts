@@ -39,7 +39,7 @@ const productSelect = {
   reviewCount: true,
   createdAt: true,
   images: {
-    where: { isPrimary: true },
+    orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }],
     select: { url: true, altText: true },
     take: 1,
   },
@@ -56,10 +56,11 @@ export class ProductService {
     const { page, limit } = getPagination(query);
     const skip = getSkip(page, limit);
 
-    const where: Prisma.ProductWhereInput = { isActive: true };
+    const where: Prisma.ProductWhereInput = { isActive: true, category: { isActive: true } };
 
-    // Category filter (by slug)
-    if (query.category) {
+    // Category filter (by slug). "all" means every category; an unknown slug matches nothing
+    // (previously it silently returned the whole catalog).
+    if (query.category && query.category !== "all") {
       const category = await prisma.category.findUnique({
         where: { slug: query.category },
       });
@@ -71,6 +72,8 @@ export class ProductService {
         });
         const categoryIds = [category.id, ...subcategories.map((c) => c.id)];
         where.categoryId = { in: categoryIds };
+      } else {
+        where.categoryId = { in: [] };
       }
     }
 
@@ -148,7 +151,7 @@ export class ProductService {
 
     // Get unique brands for filter sidebar
     const brands = await prisma.product.findMany({
-      where: { isActive: true, ...(where.categoryId ? { categoryId: where.categoryId } : {}) },
+      where: { isActive: true, brand: { not: null }, ...(where.categoryId ? { categoryId: where.categoryId } : {}) },
       select: { brand: true },
       distinct: ["brand"],
     });
@@ -166,7 +169,7 @@ export class ProductService {
     const product = await prisma.product.findUnique({
       where: { slug },
       include: {
-        images: { orderBy: { sortOrder: "asc" } },
+        images: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }] },
         variants: { where: { isActive: true }, orderBy: { sortOrder: "asc" } },
         category: { select: { id: true, name: true, slug: true } },
         inventory: { select: { stockQuantity: true, reservedQuantity: true } },
@@ -176,6 +179,8 @@ export class ProductService {
     if (!product || !product.isActive) {
       throw new NotFoundError("Product not found");
     }
+    const categoryActive = await prisma.category.count({ where: { id: product.categoryId, isActive: true } });
+    if (!categoryActive) throw new NotFoundError("Product not found");
 
     // Get related products from the same category
     const relatedProducts = await prisma.product.findMany({
@@ -194,26 +199,39 @@ export class ProductService {
 
   async getFeatured(limit = 12) {
     return prisma.product.findMany({
-      where: { isActive: true, isFeatured: true },
+      where: { isActive: true, isFeatured: true, category: { isActive: true } },
       select: productSelect,
       take: limit,
       orderBy: { createdAt: "desc" },
     });
   }
 
+  /** Products ranked by units sold on orders that weren't cancelled. */
   async getBestSellers(limit = 12) {
-    return prisma.product.findMany({
-      where: { isActive: true },
-      select: productSelect,
+    const sold = await prisma.orderItem.groupBy({
+      by: ["productId"],
+      where: {
+        order: { status: { notIn: ["CANCELLED", "REFUNDED"] } },
+        product: { isActive: true, category: { isActive: true } },
+      },
+      _sum: { quantity: true },
+      orderBy: { _sum: { quantity: "desc" } },
       take: limit,
-      orderBy: { reviewCount: "desc" },
     });
+    if (!sold.length) return [];
+    const products = await prisma.product.findMany({
+      where: { id: { in: sold.map((s) => s.productId) } },
+      select: productSelect,
+    });
+    const rank = new Map(sold.map((s, i) => [s.productId, i]));
+    return products.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
   }
 
   async search(q: string, limit = 10) {
     const products = await prisma.product.findMany({
       where: {
         isActive: true,
+        category: { isActive: true },
         OR: [
           { name: { contains: q, mode: "insensitive" } },
           { brand: { contains: q, mode: "insensitive" } },
@@ -226,7 +244,7 @@ export class ProductService {
         slug: true,
         price: true,
         images: {
-          where: { isPrimary: true },
+          orderBy: [{ isPrimary: "desc" as const }, { sortOrder: "asc" as const }],
           select: { url: true },
           take: 1,
         },

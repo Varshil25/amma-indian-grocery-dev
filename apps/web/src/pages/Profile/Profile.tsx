@@ -309,7 +309,9 @@ function AddressesTab() {
               <div>
                 <label className="input-label">State</label>
                 <input
-                  className={`input ${errors.state ? "border-red-400" : ""}`}
+                  placeholder="PA"
+                  maxLength={2}
+                  className={`input uppercase ${errors.state ? "border-red-400" : ""}`}
                   {...register("state")}
                 />
               </div>
@@ -438,7 +440,7 @@ function PasswordTab() {
           />
           {errors.currentPassword && (
             <p className="text-red-500 text-body-sm mt-1">
-              {errors.currentPassword.message}
+              {String(errors.currentPassword.message)}
             </p>
           )}
         </div>
@@ -452,7 +454,7 @@ function PasswordTab() {
           />
           {errors.newPassword && (
             <p className="text-red-500 text-body-sm mt-1">
-              {errors.newPassword.message}
+              {String(errors.newPassword.message)}
             </p>
           )}
         </div>
@@ -465,7 +467,7 @@ function PasswordTab() {
           />
           {errors.confirmPassword && (
             <p className="text-red-500 text-body-sm mt-1">
-              {errors.confirmPassword.message}
+              {String(errors.confirmPassword.message)}
             </p>
           )}
         </div>
