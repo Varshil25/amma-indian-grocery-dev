@@ -86,8 +86,10 @@ const Navbar = () => {
             className="bg-green-500 text-label text-white px-4 py-2 rounded-lg flex items-center gap-2 whitespace-nowrap hover:bg-green-700 transition"
           >
             <MdViewModule className="w-5 h-5 shrink-0" />
-            <span className="xl:hidden">Categories</span>
-            <span className="hidden xl:inline">All Categories</span>
+            {/* "All " is dropped below xl so the button fits; one label, no hidden duplicate */}
+            <span>
+              <span className="hidden xl:inline">All </span>Categories
+            </span>
           </Link>
 
           {/* Wishlist */}
