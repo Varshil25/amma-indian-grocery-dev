@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { HiLocationMarker, HiPhone, HiMail, HiClock } from "react-icons/hi";
 import { FaFacebookF, FaWhatsapp, FaInstagram } from "react-icons/fa";
 import footerLogo from "../assets/Logos/footer_logo.svg";
-import { useStoreSettings, parseStoreHours } from "../hooks/use-content";
+import { useStoreSettings, parseStoreHours, summarizeStoreHours } from "../hooks/use-content";
 
 const Footer = () => {
   const { data: settings } = useStoreSettings();
@@ -18,13 +18,9 @@ const Footer = () => {
   ].filter((x) => x.url && /^https?:\/\//.test(x.url));
 
   const hours = parseStoreHours(settings?.store_hours);
-  const openDays = hours.filter((h) => h.time.trim().toLowerCase() !== "closed");
-  const workHours =
-    openDays.length === 0
-      ? null
-      : openDays.every((d) => d.time === openDays[0].time)
-        ? `${openDays[0].time}, ${openDays[0].day.slice(0, 3)}–${openDays[openDays.length - 1].day.slice(0, 3)}`
-        : "See the Contact page";
+  const anyOpen = hours.some((h) => h.time.trim().toLowerCase() !== "closed");
+  // e.g. "Mon–Sat 9:00 AM - 8:00 PM", "Sun 10:00 AM - 6:00 PM"; too many different days → link
+  const hourLines = anyOpen ? summarizeStoreHours(hours) : [];
 
   return (
     <footer className="w-full bg-white border-t">
@@ -34,7 +30,8 @@ const Footer = () => {
         <div className="space-y-6">
           <img src={footerLogo} alt="Amma Grocery" className="w-20" />
 
-          <div className="space-y-4 text-text-900 text-caption">
+          {/* min-w-0 + overflow-wrap: a long email/address wraps instead of widening the page */}
+          <div className="space-y-4 text-text-900 text-caption min-w-0 [&_p]:min-w-0 [&_p]:[overflow-wrap:anywhere]">
             {address && (
               <div className="flex gap-3 items-start">
                 <HiLocationMarker className="text-green-500 w-5 h-5 mt-1 shrink-0" />
@@ -43,7 +40,7 @@ const Footer = () => {
             )}
 
             {phone && (
-              <div className="flex gap-3 items-top">
+              <div className="flex gap-3 items-center">
                 <HiPhone className="text-green-500 w-5 h-5 shrink-0" />
                 <p>
                   <span className="font-medium">Call Us:</span>{" "}
@@ -62,10 +59,17 @@ const Footer = () => {
               </div>
             )}
 
-            {workHours && (
-              <div className="flex gap-3 items-center">
-                <HiClock className="text-green-500 w-5 h-5 shrink-0" />
-                <p><span className="font-medium">Work hours:</span> {workHours}</p>
+            {hourLines.length > 0 && (
+              <div className="flex gap-3 items-start">
+                <HiClock className="text-green-500 w-5 h-5 mt-0.5 shrink-0" />
+                <div>
+                  <span className="font-medium">Work hours:</span>{" "}
+                  {hourLines.length <= 3 ? (
+                    hourLines.map((line) => <span key={line} className="block">{line}</span>)
+                  ) : (
+                    <Link to="/contact" className="hover:text-green-500 underline">See store hours</Link>
+                  )}
+                </div>
               </div>
             )}
           </div>

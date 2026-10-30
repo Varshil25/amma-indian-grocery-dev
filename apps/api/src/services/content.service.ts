@@ -1,6 +1,7 @@
 import prisma from "../config/database.js";
 import { BadRequestError, NotFoundError } from "../middleware/errorHandler.js";
 import { settingsService } from "./settings.service.js";
+import { PHONE_HINT, normalizeUSPhone } from "../utils/phone.js";
 
 export class ContentService {
   async getActiveBanners(position?: string) {
@@ -24,25 +25,35 @@ export class ContentService {
     return page;
   }
 
-  async submitContact(data: { name: string; email: string; phone?: string; subject?: string; message: string }) {
-    const str = (v: unknown) => (typeof v === "string" ? v : "");
-    if (!str(data.name).trim() || !str(data.email).trim() || !str(data.message).trim()) {
+  async submitContact(body: unknown) {
+    const data = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+    // Non-string values (numbers, objects) are treated as empty rather than crashing
+    const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+    const name = str(data.name);
+    const email = str(data.email).toLowerCase();
+    const subject = str(data.subject);
+    const message = str(data.message);
+    const rawPhone = str(data.phone);
+
+    if (!name || !email || !message) {
       throw new BadRequestError("Name, email, and message are required");
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str(data.email).trim())) {
+    if (name.length > 100) throw new BadRequestError("Name must be 100 characters or fewer");
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       throw new BadRequestError("Please enter a valid email address");
     }
-    if (str(data.message).length > 5000 || str(data.name).length > 100) {
-      throw new BadRequestError("Message is too long");
+    if (subject.length > 150) throw new BadRequestError("Subject must be 150 characters or fewer");
+    if (message.length > 5000) throw new BadRequestError("Message must be 5000 characters or fewer");
+
+    // Optional; stored as +1XXXXXXXXXX like account phones so the admin can show and dial it
+    let phone: string | null = null;
+    if (rawPhone) {
+      phone = normalizeUSPhone(rawPhone);
+      if (!phone) throw new BadRequestError(PHONE_HINT);
     }
+
     return prisma.contactMessage.create({
-      data: {
-        name: data.name.trim(),
-        email: data.email.trim(),
-        phone: data.phone?.trim() || null,
-        subject: data.subject?.trim() || null,
-        message: data.message.trim(),
-      },
+      data: { name, email, phone, subject: subject || null, message },
     });
   }
 
