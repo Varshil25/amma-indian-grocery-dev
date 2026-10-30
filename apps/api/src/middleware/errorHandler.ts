@@ -47,6 +47,9 @@ export class ConflictError extends AppError {
   }
 }
 
+export const EMAIL_TAKEN = "An account with this email already exists";
+export const PHONE_TAKEN = "This phone number is already used by another account";
+
 export function errorHandler(err: Error, _req: Request, res: Response, _next: NextFunction): void {
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
@@ -75,12 +78,12 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
   if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
     const target = err.meta?.target;
     const fields = (Array.isArray(target) ? target.join(", ") : typeof target === "string" ? target : "") || "value";
-    res.status(409).json({
-      error: {
-        code: "CONFLICT",
-        message: `A record with this ${fields} already exists`,
-      },
-    });
+    const message = /\bphone\b/.test(fields)
+      ? PHONE_TAKEN
+      : /\bemail\b/.test(fields)
+        ? EMAIL_TAKEN
+        : `A record with this ${fields} already exists`;
+    res.status(409).json({ error: { code: "CONFLICT", message } });
     return;
   }
 

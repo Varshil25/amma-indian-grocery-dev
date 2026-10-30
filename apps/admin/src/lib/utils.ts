@@ -82,3 +82,10 @@ export async function uploadImage(file: File): Promise<string> {
   const res = await apiClient.post<{ url: string }>("/admin/media", { dataUrl });
   return res.url;
 }
+
+/** "(610) 555-0123" for a stored +1 number; anything else (older free-text entries) as-is. */
+export function formatPhone(phone: string | null | undefined): string {
+  if (!phone) return "";
+  const m = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(phone);
+  return m ? `(${m[1]}) ${m[2]}-${m[3]}` : phone;
+}

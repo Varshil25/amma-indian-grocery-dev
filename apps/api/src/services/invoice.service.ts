@@ -1,6 +1,7 @@
 import prisma from "../config/database.js";
 import { NotFoundError } from "../middleware/errorHandler.js";
 import { settingsService } from "./settings.service.js";
+import { formatUSPhone } from "../utils/phone.js";
 
 const esc = (v: unknown) =>
   String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -42,7 +43,7 @@ export class InvoiceService {
       <p style="margin:4px 0">${esc(order.address.addressLine1)}</p>
       ${order.address.addressLine2 ? `<p style="margin:4px 0">${esc(order.address.addressLine2)}</p>` : ""}
       <p style="margin:4px 0">${esc(order.address.city)}, ${esc(order.address.state)} ${esc(order.address.zipCode)}</p>
-      ${order.address.phone ? `<p style="margin:4px 0">${esc(order.address.phone)}</p>` : ""}
+      ${order.address.phone ? `<p style="margin:4px 0">${esc(formatUSPhone(order.address.phone))}</p>` : ""}
     `
       : "<p>Pickup order</p>";
 
@@ -88,7 +89,7 @@ export class InvoiceService {
       <h4>Bill To</h4>
       <p style="font-weight:bold">${esc(order.user.firstName)} ${esc(order.user.lastName)}</p>
       <p>${esc(order.user.email)}</p>
-      ${order.user.phone ? `<p>${esc(order.user.phone)}</p>` : ""}
+      ${order.user.phone ? `<p>${esc(formatUSPhone(order.user.phone))}</p>` : ""}
     </div>
     <div class="details-block">
       <h4>Ship To</h4>

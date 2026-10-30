@@ -1,9 +1,24 @@
 import { z } from "zod";
+import { normalizeUSPhone, PHONE_HINT } from "../utils/phone.js";
 
 export const updateProfileSchema = z.object({
-  firstName: z.string().min(1).max(50).optional(),
-  lastName: z.string().min(1).max(50).optional(),
-  phone: z.string().optional(),
+  firstName: z.string().trim().min(1, "First name is required").max(50, "First name must be 50 characters or fewer").optional(),
+  lastName: z.string().trim().min(1, "Last name is required").max(50, "Last name must be 50 characters or fewer").optional(),
+  // Not sent: unchanged. Blank: remove the number. Otherwise a valid US number, stored as +1XXXXXXXXXX.
+  phone: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v, ctx) => {
+      if (v === undefined) return undefined;
+      if (v === null || v.trim() === "") return null;
+      const normalized = normalizeUSPhone(v);
+      if (!normalized) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: PHONE_HINT });
+        return z.NEVER;
+      }
+      return normalized;
+    }),
 });
 
 // USPS codes: 50 states, DC and the inhabited territories

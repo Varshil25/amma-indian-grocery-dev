@@ -25,11 +25,13 @@ import {
   useUpdateAddress,
   useDeleteAddress,
 } from "../../hooks/use-user";
+import { PHONE_HINT, formatUSPhone, isValidOptionalPhone } from "../../lib/phone";
 
+// Same rules as the API (apps/api/src/validators/user.validator.ts)
 const profileSchema = z.object({
-  firstName: z.string().min(1, "Required").max(50),
-  lastName: z.string().min(1, "Required").max(50),
-  phone: z.string().optional(),
+  firstName: z.string().trim().min(1, "First name is required").max(50, "First name must be 50 characters or fewer"),
+  lastName: z.string().trim().min(1, "Last name is required").max(50, "Last name must be 50 characters or fewer"),
+  phone: z.string().optional().refine(isValidOptionalPhone, PHONE_HINT),
 });
 
 const passwordSchema = z
@@ -122,7 +124,7 @@ function ProfileTab() {
       ? {
           firstName: profile.firstName,
           lastName: profile.lastName,
-          phone: profile.phone || "",
+          phone: formatUSPhone(profile.phone),
         }
       : undefined,
   });
@@ -135,13 +137,16 @@ function ProfileTab() {
         Personal Information
       </h2>
       <form
-        onSubmit={handleSubmit((data) => updateMutation.mutate(data))}
+        onSubmit={handleSubmit((data) => updateMutation.mutate({ ...data, phone: data.phone?.trim() ?? "" }))}
+        noValidate
         className="space-y-5 max-w-lg"
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="input-label">First Name</label>
+            <label className="input-label" htmlFor="profile-firstName">First Name</label>
             <input
+              id="profile-firstName"
+              autoComplete="given-name"
               className={`input ${errors.firstName ? "border-red-400" : ""}`}
               {...register("firstName")}
             />
@@ -152,8 +157,10 @@ function ProfileTab() {
             )}
           </div>
           <div>
-            <label className="input-label">Last Name</label>
+            <label className="input-label" htmlFor="profile-lastName">Last Name</label>
             <input
+              id="profile-lastName"
+              autoComplete="family-name"
               className={`input ${errors.lastName ? "border-red-400" : ""}`}
               {...register("lastName")}
             />
@@ -178,12 +185,22 @@ function ProfileTab() {
         </div>
 
         <div>
-          <label className="input-label">Phone</label>
+          <label className="input-label" htmlFor="profile-phone">Phone</label>
           <input
-            className="input"
-            placeholder="(555) 123-4567"
+            id="profile-phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            aria-invalid={!!errors.phone}
+            className={`input ${errors.phone ? "border-red-400" : ""}`}
+            placeholder="(610) 555-0123"
             {...register("phone")}
           />
+          {errors.phone ? (
+            <p className="text-red-500 text-body-sm mt-1">{errors.phone.message as string}</p>
+          ) : (
+            <p className="text-body-sm text-text-200 mt-1">US numbers only. Leave blank to remove it.</p>
+          )}
         </div>
 
         <button

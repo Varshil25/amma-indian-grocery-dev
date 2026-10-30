@@ -537,11 +537,24 @@ export class AdminService {
   async getCustomers(page: number, limit: number, search?: string) {
     const where: Prisma.UserWhereInput = { role: "CUSTOMER" };
     if (search) {
+      search = search.trim();
+      // Phones are stored as +1XXXXXXXXXX, so match on the digits of whatever was typed
+      // ("(484) 555-0199", "484.555.0199", "+1 484…")
+      const digits = search.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+      const words = search.split(/\s+/).filter(Boolean);
       where.OR = [
         { email: { contains: search, mode: "insensitive" } },
         { firstName: { contains: search, mode: "insensitive" } },
         { lastName: { contains: search, mode: "insensitive" } },
         { phone: { contains: search } },
+        ...(digits.length >= 4 ? [{ phone: { contains: digits } }] : []),
+        // "Asha Iyer" — first and last name together
+        ...(words.length === 2
+          ? [{ AND: [
+              { firstName: { contains: words[0], mode: "insensitive" as const } },
+              { lastName: { contains: words[1], mode: "insensitive" as const } },
+            ] }]
+          : []),
       ];
     }
 

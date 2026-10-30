@@ -86,6 +86,14 @@ npm run db:remove-sample-data -- --apply   # do it
 Samples already used on an order are hidden instead of deleted, so order history stays intact.
 Also change the password of (or remove) `admin@ammagrocery.com` if it exists.
 
+**Phone numbers.** Phones are validated (US numbers) and stored as `+1XXXXXXXXXX`, so the same
+number can't be registered twice in different formats. Numbers saved before that are converted with:
+
+```bash
+npm run db:normalize-phones              # dry run
+npm run db:normalize-phones -- --apply
+```
+
 ### Available Scripts
 
 - `npm run dev` - Start development server

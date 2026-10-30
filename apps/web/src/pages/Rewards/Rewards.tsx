@@ -60,10 +60,13 @@ export default function Rewards() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const siteUrl = window.location.origin;
+  // The store may live under a sub-path (GitHub Pages), so build links from the app's base URL
+  const siteUrl = `${window.location.origin}${import.meta.env.BASE_URL}`;
+  // The signup page fills in the code from ?ref=
+  const signupLink = (code: string) => `${siteUrl}signup?ref=${encodeURIComponent(code)}`;
 
   const getShareMessage = (code: string) =>
-    `Shop at Amma Indian Grocery and get 100 reward points! Use my referral code: ${code}\nSign up here: ${siteUrl}`;
+    `Shop at Amma Indian Grocery and get 100 reward points! Use my referral code: ${code}\nSign up here: ${signupLink(code)}`;
 
   const shareViaWhatsApp = (code: string) => {
     window.open(`https://wa.me/?text=${encodeURIComponent(getShareMessage(code))}`, "_blank");
@@ -84,7 +87,7 @@ export default function Rewards() {
         await navigator.share({
           title: "Amma Indian Grocery - Referral",
           text: getShareMessage(code),
-          url: siteUrl,
+          url: signupLink(code),
         });
       } catch { /* user cancelled */ }
     }

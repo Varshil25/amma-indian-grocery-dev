@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useAdminCustomers, useAdminCustomer, useUpdateCustomer } from "../hooks/use-admin";
 import Modal from "../components/Modal";
-import { money, errorMessage } from "../lib/utils";
+import { money, errorMessage, formatPhone } from "../lib/utils";
 
 export default function Customers() {
   const [page, setPage] = useState(1);
@@ -134,7 +134,7 @@ export default function Customers() {
                       {customer.phone ? (
                         <div className="flex items-center gap-1.5 text-gray-600">
                           <Phone size={13} className="text-gray-400" />
-                          {customer.phone}
+                          {formatPhone(customer.phone)}
                         </div>
                       ) : (
                         <span className="text-gray-400">-</span>
@@ -239,7 +239,7 @@ function CustomerModal({ id, onClose }: { id: string; onClose: () => void }) {
             </div>
             <div>
               <p className="text-xs text-gray-500">Phone</p>
-              <p className="text-gray-900">{c.phone || "-"}</p>
+              <p className="text-gray-900">{formatPhone(c.phone) || "-"}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500">Total spent</p>

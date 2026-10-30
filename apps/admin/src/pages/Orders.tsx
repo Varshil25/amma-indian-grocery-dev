@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 import { useAdminOrders, useAdminOrder, useUpdateOrderStatus, useMarkOrderPaid } from "../hooks/use-admin";
 import Modal, { inputClass, primaryBtn, secondaryBtn } from "../components/Modal";
-import { money, errorMessage } from "../lib/utils";
+import { money, errorMessage, formatPhone } from "../lib/utils";
 
 const STATUS_TABS = ["ALL", "PENDING", "CONFIRMED", "PROCESSING", "READY_FOR_PICKUP", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"];
 
@@ -395,7 +395,7 @@ function OrderDetailModal({ orderId, onClose }: { orderId: string; onClose: () =
               </p>
               {order.customer.phone && (
                 <p className="text-gray-600 flex items-center gap-1">
-                  <Phone size={12} /> {order.customer.phone}
+                  <Phone size={12} /> {formatPhone(order.customer.phone)}
                 </p>
               )}
             </div>
@@ -416,7 +416,7 @@ function OrderDetailModal({ orderId, onClose }: { orderId: string; onClose: () =
                       {order.address.city}, {order.address.state} {order.address.zipCode}
                     </span>
                   </p>
-                  {order.address.phone && <p className="text-gray-600 ml-4">{order.address.phone}</p>}
+                  {order.address.phone && <p className="text-gray-600 ml-4">{formatPhone(order.address.phone)}</p>}
                 </div>
               ) : (
                 <p className="text-gray-600">Customer collects in store</p>

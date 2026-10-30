@@ -42,6 +42,9 @@ app.use(
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
+  // Count only failed attempts: shoppers signing up on the store's Wi-Fi share one IP,
+  // and successful sign-ins shouldn't use up the budget meant to stop password guessing
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   message: rateLimitMessage,

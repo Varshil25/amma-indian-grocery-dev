@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import prisma from "../config/database.js";
-import { BadRequestError, NotFoundError } from "../middleware/errorHandler.js";
+import { BadRequestError, ConflictError, NotFoundError, PHONE_TAKEN } from "../middleware/errorHandler.js";
 
 export class UserService {
   async getProfile(userId: string) {
@@ -41,12 +41,16 @@ export class UserService {
   async updateProfile(userId: string, data: {
     firstName?: string;
     lastName?: string;
-    phone?: string;
+    phone?: string | null; // already validated and normalized (+1XXXXXXXXXX), null to remove
     avatar?: string;
   }) {
+    if (data.phone) {
+      const taken = await prisma.user.findFirst({ where: { phone: data.phone, id: { not: userId } }, select: { id: true } });
+      if (taken) throw new ConflictError(PHONE_TAKEN);
+    }
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { ...data, phone: data.phone === "" ? null : data.phone },
+      data,
       select: {
         id: true,
         email: true,

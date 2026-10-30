@@ -30,7 +30,7 @@ interface MessageResponse {
 function useReturnTo() {
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from;
-  return from && from.startsWith("/") && !from.startsWith("/login") && !from.startsWith("/signup") ? from : "/";
+  return from && from.startsWith("/") && !from.startsWith("//") && !/^\/(login|signup)\b/.test(from) ? from : "/";
 }
 
 /** Send a signed-out shopper to the login page, returning them here afterwards. */
@@ -49,11 +49,11 @@ export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth);
 
   return useMutation({
-    mutationFn: (data: { email: string; password: string }) =>
+    mutationFn: ({ remember: _remember, ...data }: { email: string; password: string; remember?: boolean }) =>
       apiClient.post<AuthResponse>("/auth/login", data, { skipAuth: true }),
-    onSuccess: (res) => {
+    onSuccess: (res, vars) => {
       const { user, accessToken, refreshToken } = res.data;
-      setAuth(user, accessToken, refreshToken);
+      setAuth(user, accessToken, refreshToken, vars.remember ?? true);
       toast.success(`Welcome back, ${user.firstName}!`);
       navigate(returnTo, { replace: true });
     },
@@ -91,12 +91,14 @@ export function useRegister() {
 
 export function useLogout() {
   const queryClient = useQueryClient();
-  const { refreshToken, logout } = useAuthStore();
+  const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
 
   return useMutation({
+    // Read the token at click time (it may have been refreshed since render) and don't route
+    // logout through the expired-session refresh, which would revoke a different token
     mutationFn: () =>
-      apiClient.post("/auth/logout", { refreshToken }),
+      apiClient.post("/auth/logout", { refreshToken: useAuthStore.getState().refreshToken }, { skipAuth: true }),
     onSettled: () => {
       logout();
       queryClient.clear();

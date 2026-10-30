@@ -2,11 +2,20 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import prisma from "../config/database.js";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../utils/jwt.js";
-import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "../middleware/errorHandler.js";
+import {
+  BadRequestError,
+  ConflictError,
+  EMAIL_TAKEN,
+  NotFoundError,
+  PHONE_TAKEN,
+  UnauthorizedError,
+} from "../middleware/errorHandler.js";
 import type { JwtPayload } from "../middleware/auth.js";
 import { emailService } from "./email.service.js";
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
+// bcrypt hash of a random string; used so failed logins for unknown emails take as long as real ones
+const DUMMY_HASH = bcrypt.hashSync(crypto.randomBytes(16).toString("hex"), 12);
 const findByEmail = (email: string) =>
   prisma.user.findFirst({ where: { email: { equals: normalizeEmail(email), mode: "insensitive" } } });
 
@@ -16,97 +25,74 @@ export class AuthService {
     password: string;
     firstName: string;
     lastName: string;
-    phone?: string;
-    referralCode?: string;
+    phone?: string; // validated + normalized by registerSchema (+1XXXXXXXXXX)
+    referralCode?: string; // trimmed + upper-cased by registerSchema
   }) {
     data = { ...data, email: normalizeEmail(data.email) };
-    // Check if user exists
-    const existing = await findByEmail(data.email);
-    if (existing) {
-      throw new ConflictError("An account with this email already exists");
+
+    if (await findByEmail(data.email)) throw new ConflictError(EMAIL_TAKEN);
+    if (data.phone && (await prisma.user.findFirst({ where: { phone: data.phone }, select: { id: true } }))) {
+      throw new ConflictError(PHONE_TAKEN);
+    }
+    // A mistyped code would otherwise be ignored and the promised bonus silently lost
+    const referrer = data.referralCode
+      ? await prisma.user.findUnique({ where: { referralCode: data.referralCode } })
+      : null;
+    if (data.referralCode && !referrer) {
+      throw new BadRequestError("That referral code isn't valid. Check it, or leave it blank.");
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(data.password, 12);
-
-    // Generate unique referral code for this user
     const userReferralCode = `AMMA-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email: data.email,
-        passwordHash,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone || undefined, // blank form field arrives as "" and would collide on the unique index
-        referralCode: userReferralCode,
-      },
-    });
-
-    // Create reward account
-    await prisma.rewardAccount.create({
-      data: {
-        userId: user.id,
-        totalPoints: 50, // signup bonus
-        availablePoints: 50,
-      },
-    });
-
-    // Record signup bonus transaction
-    const rewardAccount = await prisma.rewardAccount.findUnique({ where: { userId: user.id } });
-    if (rewardAccount) {
-      await prisma.rewardTransaction.create({
+    // One transaction: a failure part-way can't leave an account without its rewards
+    const user = await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
         data: {
-          rewardAccountId: rewardAccount.id,
-          type: "EARN_SIGNUP",
-          points: 50,
-          description: "Welcome bonus for signing up",
+          email: data.email,
+          passwordHash,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          referralCode: userReferralCode,
         },
       });
-    }
 
-    // Handle referral if code provided
-    if (data.referralCode) {
-      const referrer = await prisma.user.findUnique({
-        where: { referralCode: data.referralCode.trim().toUpperCase() },
+      const bonus = referrer ? 150 : 50; // welcome bonus + referee bonus
+      const account = await tx.rewardAccount.create({
+        data: { userId: created.id, totalPoints: bonus, availablePoints: bonus },
       });
+      await tx.rewardTransaction.create({
+        data: { rewardAccountId: account.id, type: "EARN_SIGNUP", points: 50, description: "Welcome bonus for signing up" },
+      });
+
       if (referrer) {
-        // Give referee bonus (100 points)
-        await prisma.rewardAccount.update({
-          where: { userId: user.id },
+        await tx.rewardTransaction.create({
           data: {
-            totalPoints: { increment: 100 },
-            availablePoints: { increment: 100 },
-          },
-        });
-        await prisma.rewardTransaction.create({
-          data: {
-            rewardAccountId: rewardAccount!.id,
+            rewardAccountId: account.id,
             type: "EARN_REFERRAL",
             points: 100,
             description: `Referral bonus from ${referrer.firstName}`,
           },
         });
-
-        // Create referral record (referrer bonus awarded on first purchase)
-        await prisma.referral.create({
+        // Referrer's bonus is awarded on the new customer's first purchase
+        await tx.referral.create({
           data: {
             referrerId: referrer.id,
-            refereeId: user.id,
-            referralCode: data.referralCode.trim().toUpperCase(),
+            refereeId: created.id,
+            referralCode: data.referralCode!,
             refereeBonus: 100,
-            referrerBonus: 0, // awarded when referee makes first purchase
+            referrerBonus: 0,
           },
         });
       }
-    }
+      return created;
+    });
 
     emailService
       .sendWelcome({ email: user.email, name: user.firstName })
       .catch((err) => console.error("Welcome email failed:", err));
 
-    // Generate tokens
     const tokens = await this.generateTokens(user.id, user.email, user.role);
 
     return {
@@ -124,17 +110,16 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const user = await findByEmail(email);
-    if (!user || !user.passwordHash) {
+    // Compare against a dummy hash when there's no account, so the response time doesn't
+    // reveal which emails are registered
+    const isValid = await bcrypt.compare(password, user?.passwordHash || DUMMY_HASH);
+    if (!user || !user.passwordHash || !isValid) {
       throw new UnauthorizedError("Invalid email or password");
     }
 
+    // Only after the password checks out, so a blocked account can't be discovered by guessing
     if (!user.isActive) {
       throw new UnauthorizedError("Account is disabled. Please contact support.");
-    }
-
-    const isValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isValid) {
-      throw new UnauthorizedError("Invalid email or password");
     }
 
     // Update last login
