@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "../lib/api-client";
 import { useAuthStore } from "../stores/auth-store";
+import { useCartUIStore } from "../stores/cart-ui-store";
 
 interface CartProduct {
   id: string;
@@ -68,6 +69,7 @@ export function useAddToCart() {
       }),
     onSuccess: (res) => {
       queryClient.setQueryData(["cart"], res);
+      queryClient.invalidateQueries({ queryKey: ["order-preview"] });
       toast.success("Added to cart");
     },
     onError: (error: ApiError) => {
@@ -86,6 +88,7 @@ export function useUpdateCartItem() {
       }),
     onSuccess: (res) => {
       queryClient.setQueryData(["cart"], res);
+      queryClient.invalidateQueries({ queryKey: ["order-preview"] });
     },
     onError: (error: ApiError) => {
       toast.error(error.message || "Failed to update cart");
@@ -101,6 +104,7 @@ export function useRemoveCartItem() {
       apiClient.delete<CartResponse>(`/cart/items/${productId}`),
     onSuccess: (res) => {
       queryClient.setQueryData(["cart"], res);
+      queryClient.invalidateQueries({ queryKey: ["order-preview"] });
       toast.success("Removed from cart");
     },
     onError: (error: ApiError) => {

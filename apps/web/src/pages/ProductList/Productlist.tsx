@@ -2,23 +2,11 @@ import React from "react";
 import PageHeader from "../../components/PageHeader";
 import ProductCard from "./ProductCard";
 import Pagination from "../../components/Pagination";
-import { useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useProducts, type ProductQueryParams } from "../../hooks/use-products";
 import { mapProductToCard } from "../../lib/product-helpers";
-
-// Fallback mock data for when API is not available
-import orange from "../../assets/Images/Homepage/orange.png";
-const mockProducts = Array.from({ length: 10 }).map((_, index) => ({
-  id: index,
-  category: "Fruits",
-  name: "Oranges",
-  weight: "1.0 kg",
-  price: "8.00",
-  oldPrice: "10.00",
-  rating: 4.8,
-  discount: "20%",
-  img: orange,
-}));
+import { useCategories } from "../../hooks/use-categories";
+import SEO from "../../components/SEO";
 
 const sortOptions = [
   { value: "", label: "Sort by" },
@@ -35,15 +23,23 @@ const ProductList: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = parseInt(searchParams.get("page") || "1");
   const sort = searchParams.get("sort") || "";
+  // The header search box sends shoppers to /categories/all?search=…
+  const search = (searchParams.get("search") || "").trim();
+  const isAll = !category || category === "all";
 
   const queryParams: ProductQueryParams = {
-    category,
+    category: isAll ? undefined : category,
+    search: search || undefined,
     page,
     sort: sort || undefined,
     limit: 20,
   };
 
-  const { data, isLoading, isError } = useProducts(queryParams);
+  const { data, isLoading, isError, error, refetch } = useProducts(queryParams);
+  const { data: categories } = useCategories();
+  const categoryInfo = categories
+    ?.flatMap((c) => [c, ...(c.children || [])])
+    .find((c) => c.slug === category);
 
   const handleSortChange = (value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -63,16 +59,19 @@ const ProductList: React.FC = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const categoryLabel = category ? category.replace(/-/g, " ") : "Products";
+  const categoryName = isAll ? "All Products" : categoryInfo?.name || category!.replace(/-/g, " ");
+  const categoryLabel = search ? `Results for “${search}”` : categoryName;
+  const unknownCategory = !isAll && !!categories && !categoryInfo;
 
   return (
     <>
+      <SEO title={categoryLabel} description={categoryInfo?.description || `Shop ${categoryLabel} at Amma Indian Grocery.`} />
       <PageHeader
         title={categoryLabel}
         breadcrumbs={[
           { label: "Home", href: "/" },
           { label: "All Categories", href: "/all-categories" },
-          { label: categoryLabel },
+          { label: categoryName },
         ]}
       />
 
@@ -80,7 +79,7 @@ const ProductList: React.FC = () => {
         {/* Top controls */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h2 className="text-h4 text-text-500 font-semibold capitalize">
+            <h2 className={`text-h4 text-text-500 font-semibold ${search ? "" : "capitalize"}`}>
               {categoryLabel}
             </h2>
             {data?.pagination && (
@@ -114,14 +113,14 @@ const ProductList: React.FC = () => {
           </div>
         )}
 
-        {/* Error / API not available - show mock data */}
         {isError && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 justify-center">
-            {mockProducts.map((product) => (
-              <div className="flex justify-center" key={product.id}>
-                <ProductCard {...product} />
-              </div>
-            ))}
+          <div className="text-center py-20">
+            <p className="text-text-300 text-body-lg mb-4">
+              {(error as Error)?.message || "We couldn't load products right now."}
+            </p>
+            <button onClick={() => refetch()} className="btn-primary">
+              Try again
+            </button>
           </div>
         )}
 
@@ -131,8 +130,17 @@ const ProductList: React.FC = () => {
             {data.products.length === 0 ? (
               <div className="text-center py-20">
                 <p className="text-text-300 text-body-lg">
-                  No products found in this category.
+                  {search
+                    ? `No products match “${search}”.`
+                    : unknownCategory
+                      ? "This category doesn't exist."
+                      : isAll
+                        ? "No products yet."
+                        : "No products in this category yet."}
                 </p>
+                <Link to="/all-categories" className="text-green-600 hover:underline mt-2 inline-block">
+                  Browse all categories
+                </Link>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 justify-center">
@@ -144,11 +152,11 @@ const ProductList: React.FC = () => {
               </div>
             )}
 
-            <Pagination
+            {data.pagination.totalPages > 1 && <Pagination
               currentPage={data.pagination.page}
               totalPages={data.pagination.totalPages}
               onPageChange={handlePageChange}
-            />
+            />}
           </>
         )}
       </div>

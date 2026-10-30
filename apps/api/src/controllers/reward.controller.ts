@@ -1,3 +1,4 @@
+import { BadRequestError } from "../middleware/errorHandler.js";
 import { Request, Response } from "express";
 import { rewardService } from "../services/reward.service.js";
 
@@ -29,7 +30,8 @@ export class RewardController {
 
   async applyReferral(req: Request, res: Response) {
     const userId = req.user!.userId;
-    const { code } = req.body;
+    const code = typeof req.body?.code === "string" ? req.body.code : "";
+    if (!code.trim()) throw new BadRequestError("Referral code is required");
     const result = await rewardService.applyReferralCode(userId, code);
     res.json({ success: true, data: result });
   }

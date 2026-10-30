@@ -59,6 +59,7 @@ export interface OrderListItem {
 
 export interface OrderDetail {
   id: string;
+  canCancel?: boolean;
   orderNumber: string;
   status: string;
   fulfillmentType: string;
@@ -108,7 +109,44 @@ interface CreateOrderResponse {
     orderNumber: string;
     status: string;
     totalAmount: number;
+    paymentMethod: "PAY_ON_DELIVERY" | "CARD";
   };
+}
+
+export interface OrderPreview {
+  subtotal: number;
+  discountAmount: number;
+  coupon: { code: string; description?: string | null; discountType: string; discountValue: number } | null;
+  couponError: string | null;
+  rewardPointsUsed: number;
+  rewardDiscount: number;
+  shippingAmount: number;
+  taxAmount: number;
+  totalAmount: number;
+  taxRate: number;
+  freeDeliveryThreshold: number;
+  deliveryFee: number;
+  deliveryEnabled: boolean;
+  pickupEnabled: boolean;
+  payOnDeliveryEnabled: boolean;
+  onlinePaymentsEnabled: boolean;
+  itemCount: number;
+}
+
+/** Server-calculated totals for the current cart (tax, delivery, coupon) */
+export function useOrderPreview(input: { fulfillmentType: "DELIVERY" | "PICKUP"; couponCode?: string | null }, enabled = true) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  return useQuery({
+    queryKey: ["order-preview", input.fulfillmentType, input.couponCode || null],
+    queryFn: () =>
+      apiClient.post<{ success: boolean; data: OrderPreview }>("/orders/preview", {
+        fulfillmentType: input.fulfillmentType,
+        couponCode: input.couponCode || undefined,
+      }),
+    enabled: isAuthenticated && enabled,
+    select: (res) => res.data,
+    staleTime: 0,
+  });
 }
 
 interface PaymentIntentResponse {
@@ -155,10 +193,14 @@ export function useCreateOrder() {
       notes?: string;
       couponCode?: string;
       rewardPointsToRedeem?: number;
+      paymentMethod?: "PAY_ON_DELIVERY" | "CARD";
     }) => apiClient.post<CreateOrderResponse>("/orders", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["product"] });
+      queryClient.invalidateQueries({ queryKey: ["rewards"] });
     },
     onError: (error: ApiError) => {
       toast.error(error.message || "Failed to create order");
@@ -203,8 +245,10 @@ export function useCancelOrder() {
   return useMutation({
     mutationFn: ({ orderId, reason }: { orderId: string; reason: string }) =>
       apiClient.put(`/orders/${orderId}/cancel`, { reason }),
-    onSuccess: () => {
+    onSuccess: (_d, v) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["order", v.orderId] });
+      queryClient.invalidateQueries({ queryKey: ["rewards"] });
       toast.success("Order cancelled successfully");
     },
     onError: (error: ApiError) => {

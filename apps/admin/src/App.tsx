@@ -15,6 +15,8 @@ const Deals = lazy(() => import("./pages/Deals"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Pages = lazy(() => import("./pages/Pages"));
+const Categories = lazy(() => import("./pages/Categories"));
+const Banners = lazy(() => import("./pages/Banners"));
 
 function PageFallback() {
   return (
@@ -33,6 +35,8 @@ const App = () => {
           <Route element={<AdminLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/banners" element={<Banners />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/customers" element={<Customers />} />
             <Route path="/inventory" element={<Inventory />} />

@@ -12,10 +12,11 @@ export class DealService {
       },
       include: {
         products: {
+          where: { product: { isActive: true } },
           include: {
             product: {
               select: {
-                id: true, name: true, slug: true, price: true, compareAtPrice: true,
+                id: true, name: true, slug: true, price: true, compareAtPrice: true, isActive: true,
                 images: { take: 1, orderBy: { sortOrder: "asc" }, select: { url: true } },
               },
             },
@@ -32,7 +33,8 @@ export class DealService {
       name: d.name,
       slug: d.slug,
       description: d.description,
-      discountType: d.discountType,
+      bannerImage: d.bannerImage,
+      discountType: d.discountType === "FIXED" ? "FIXED_AMOUNT" : d.discountType,
       discountValue: Number(d.discountValue),
       startDate: d.startDate,
       endDate: d.endDate,
@@ -54,6 +56,7 @@ export class DealService {
       where: { slug, isActive: true, startDate: { lte: now }, endDate: { gte: now } },
       include: {
         products: {
+          where: { product: { isActive: true } },
           include: {
             product: {
               include: {
@@ -74,7 +77,7 @@ export class DealService {
       name: deal.name,
       slug: deal.slug,
       description: deal.description,
-      discountType: deal.discountType,
+      discountType: deal.discountType === "FIXED" ? "FIXED_AMOUNT" : deal.discountType,
       discountValue: Number(deal.discountValue),
       startDate: deal.startDate,
       endDate: deal.endDate,

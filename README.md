@@ -54,7 +54,45 @@ npm install
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:8080`
+4. Open your browser and navigate to `http://localhost:3000`
+
+### Running the full stack (store, admin, API)
+
+The storefront shows only what's in the database — there is no built-in sample data.
+Everything (categories, products, images, stock, deals, coupons, home banners, info pages,
+store details, tax and delivery settings) is managed from the admin panel.
+
+```bash
+cp apps/api/.env.example apps/api/.env      # set DATABASE_URL and the two JWT secrets
+npm run db:push --workspace=apps/api        # create the tables
+ADMIN_EMAIL=you@yourstore.com ADMIN_PASSWORD='a-long-password' npm run db:seed
+npm run dev:api      # http://localhost:8000
+npm run dev:admin    # http://localhost:3001  — sign in with the admin account above
+npm run dev:web      # http://localhost:3000
+```
+
+The seed creates the first admin, starter categories and the info pages; re-running it never
+overwrites anything.
+
+**Removing old sample data.** Databases seeded by older versions of this project contain 10
+sample products (Basmati Rice, Fresh Oranges, …), the coupons WELCOME10/SPICE5 and an admin
+login whose password was in this repo. Remove the samples with:
+
+```bash
+npm run db:remove-sample-data              # dry run: lists what would change
+npm run db:remove-sample-data -- --apply   # do it
+```
+
+Samples already used on an order are hidden instead of deleted, so order history stays intact.
+Also change the password of (or remove) `admin@ammagrocery.com` if it exists.
+
+**Phone numbers.** Phones are validated (US numbers) and stored as `+1XXXXXXXXXX`, so the same
+number can't be registered twice in different formats. Numbers saved before that are converted with:
+
+```bash
+npm run db:normalize-phones              # dry run
+npm run db:normalize-phones -- --apply
+```
 
 ### Available Scripts
 

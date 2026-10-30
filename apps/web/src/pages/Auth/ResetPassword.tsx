@@ -35,7 +35,7 @@ export default function ResetPassword() {
 
   const onSubmit = (data: ResetForm) => {
     const { confirmPassword, ...payload } = data;
-    mutation.mutate(payload);
+    mutation.mutate(payload as { email: string; code: string; newPassword: string });
   };
 
   return (

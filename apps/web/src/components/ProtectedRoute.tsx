@@ -17,12 +17,16 @@ export default function ProtectedRoute({
 
   if (requireAuth && !isAuthenticated) {
     // Redirect to login, preserving the intended destination
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    // Keep the query string too (e.g. /orders?status=DELIVERED)
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
 
-  // If authenticated user tries to access login/signup, redirect them
+  // Signed-in user on login/signup: send them on. Right after signing in this guard re-renders
+  // before the login handler navigates, so it must honour the same "return to" page.
   if (!requireAuth && isAuthenticated) {
-    return <Navigate to={redirectTo || "/"} replace />;
+    const from = (location.state as { from?: string } | null)?.from;
+    const safeFrom = from && from.startsWith("/") && !from.startsWith("//") && !/^\/(login|signup)\b/.test(from) ? from : null;
+    return <Navigate to={redirectTo || safeFrom || "/"} replace />;
   }
 
   return <>{children}</>;

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
@@ -15,9 +16,11 @@ import {
   Download,
   Upload,
   Link2,
+  ShoppingCart,
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "../lib/api-client";
+import { errorMessage } from "../lib/utils";
 
 interface SyncStatus {
   squareConfigured: boolean;
@@ -51,20 +54,30 @@ interface ContactMessagesResponse {
   };
 }
 
-const defaultHours = [
-  { day: "Monday", time: "Closed" },
-  { day: "Tuesday", time: "10:00am - 8:00pm" },
-  { day: "Wednesday", time: "10:00am - 8:00pm" },
-  { day: "Thursday", time: "9:00am - 8:00pm" },
-  { day: "Friday", time: "9:00am - 8:00pm" },
-  { day: "Saturday", time: "9:00am - 6:00pm" },
-  { day: "Sunday", time: "Closed" },
-];
+// Blank until the owner fills them in; the storefront only shows days that have hours set.
+const defaultHours = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => ({
+  day,
+  time: "",
+}));
+
+const checkoutDefaults = {
+  tax_rate: "",
+  delivery_fee: "",
+  free_delivery_threshold: "",
+  delivery_enabled: "true",
+  pickup_enabled: "true",
+  pay_on_delivery_enabled: "true",
+};
 
 export default function Settings() {
   const queryClient = useQueryClient();
   const [syncing, setSyncing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"store" | "pos" | "messages">("store");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const activeTab: "store" | "checkout" | "pos" | "messages" =
+    tabParam === "messages" || tabParam === "pos" || tabParam === "checkout" ? tabParam : "store";
+  const setActiveTab = (t: string) => setSearchParams(t === "store" ? {} : { tab: t }, { replace: true });
+  const [checkout, setCheckout] = useState(checkoutDefaults);
 
   // Store settings
   const [storeForm, setStoreForm] = useState({
@@ -100,6 +113,14 @@ export default function Settings() {
       if (s.store_hours) {
         try { setHours(JSON.parse(s.store_hours)); } catch { /* keep defaults */ }
       }
+      setCheckout({
+        tax_rate: s.tax_rate ?? "",
+        delivery_fee: s.delivery_fee ?? "",
+        free_delivery_threshold: s.free_delivery_threshold ?? "",
+        delivery_enabled: s.delivery_enabled ?? "true",
+        pickup_enabled: s.pickup_enabled ?? "true",
+        pay_on_delivery_enabled: s.pay_on_delivery_enabled ?? "true",
+      });
     }
   }, [settings]);
 
@@ -109,8 +130,16 @@ export default function Settings() {
       toast.success("Store settings saved");
       queryClient.invalidateQueries({ queryKey: ["admin", "store-settings"] });
     },
-    onError: () => toast.error("Failed to save settings"),
+    onError: (err: Error) => toast.error(errorMessage(err, "Failed to save settings")),
   });
+
+  const handleSaveCheckout = () => {
+    if (checkout.delivery_enabled !== "true" && checkout.pickup_enabled !== "true") {
+      toast.error("Keep at least one of delivery or pickup turned on");
+      return;
+    }
+    saveSettingsMutation.mutate(checkout);
+  };
 
   const handleSaveStore = () => {
     saveSettingsMutation.mutate({
@@ -177,11 +206,15 @@ export default function Settings() {
 
   const markReadMutation = useMutation({
     mutationFn: (id: string) => apiClient.put(`/admin/contact-messages/${id}/read`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin", "contact-messages"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "contact-messages"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+    },
   });
 
   const tabs = [
     { id: "store" as const, label: "Store Info", icon: Store },
+    { id: "checkout" as const, label: "Checkout", icon: ShoppingCart },
     { id: "messages" as const, label: "Messages", icon: MessageSquare },
     { id: "pos" as const, label: "POS Integration", icon: Wifi },
   ];
@@ -287,7 +320,7 @@ export default function Settings() {
                           setHours(updated);
                         }}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                        placeholder="e.g. 9:00am - 8:00pm or Closed"
+                        placeholder="e.g. 9:00am - 8:00pm, or Closed (leave blank to hide)"
                       />
                     </div>
                   ))}
@@ -332,6 +365,90 @@ export default function Settings() {
               >
                 {saveSettingsMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                 {saveSettingsMutation.isPending ? "Saving..." : "Save Settings"}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Checkout Tab */}
+      {activeTab === "checkout" && (
+        <div className="space-y-6">
+          {settingsLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-green-500" />
+            </div>
+          ) : (
+            <>
+              <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+                <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                  <ShoppingCart size={18} /> Prices & delivery
+                </h3>
+                <p className="text-sm text-gray-500">These are applied to every order and shown to shoppers in the cart and at checkout.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {(
+                    [
+                      ["tax_rate", "Sales tax (%)", "e.g. 6"],
+                      ["delivery_fee", "Delivery fee ($)", "e.g. 5.99"],
+                      ["free_delivery_threshold", "Free delivery from ($)", "e.g. 50"],
+                    ] as const
+                  ).map(([key, label, ph]) => (
+                    <div key={key}>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor={`s-${key}`}>
+                        {label}
+                      </label>
+                      <input
+                        id={`s-${key}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={checkout[key]}
+                        placeholder={ph}
+                        onChange={(e) => setCheckout((c) => ({ ...c, [key]: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2 pt-2">
+                  {(
+                    [
+                      ["delivery_enabled", "Offer home delivery"],
+                      ["pickup_enabled", "Offer in-store pickup"],
+                      ["pay_on_delivery_enabled", "Allow paying on delivery / at pickup"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label key={key} className="flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={checkout[key] === "true"}
+                        onChange={(e) => setCheckout((c) => ({ ...c, [key]: e.target.checked ? "true" : "false" }))}
+                        className="w-4 h-4 rounded border-gray-300 text-green-500"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+                <div className="text-sm rounded-lg px-3 py-2 bg-gray-50 text-gray-600 flex items-center gap-2">
+                  {settings?.data?.online_payments_enabled === "true" ? (
+                    <>
+                      <CheckCircle size={16} className="text-green-500" /> Online card payments (Stripe) are enabled.
+                    </>
+                  ) : (
+                    <>
+                      <XCircle size={16} className="text-gray-400" /> Online card payments are off. Set STRIPE_SECRET_KEY and
+                      STRIPE_PUBLISHABLE_KEY on the API server to turn them on.
+                    </>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleSaveCheckout}
+                disabled={saveSettingsMutation.isPending}
+                className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition"
+              >
+                {saveSettingsMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                {saveSettingsMutation.isPending ? "Saving..." : "Save Checkout Settings"}
               </button>
             </>
           )}

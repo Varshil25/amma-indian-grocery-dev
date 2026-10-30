@@ -1,3 +1,5 @@
+import { useAuthStore } from "../stores/auth-store";
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 interface ApiOptions extends RequestInit {
@@ -11,58 +13,56 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
+  private refreshing: Promise<string | null> | null = null;
+
   private getAccessToken(): string | null {
-    try {
-      const stored = localStorage.getItem("auth-storage");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return parsed?.state?.accessToken || null;
-      }
-    } catch {
-      return null;
-    }
-    return null;
+    return useAuthStore.getState().accessToken;
   }
 
-  private async refreshToken(): Promise<string | null> {
+  /**
+   * One refresh at a time. The server rotates refresh tokens, so when several requests hit an
+   * expired session together, separate refreshes would all present the same token and every one
+   * after the first would be rejected — signing the shopper out.
+   */
+  private refreshAccessToken(): Promise<string | null> {
+    if (!this.refreshing) {
+      this.refreshing = this.doRefresh().finally(() => {
+        this.refreshing = null;
+      });
+    }
+    return this.refreshing;
+  }
+
+  private async doRefresh(): Promise<string | null> {
+    const used = useAuthStore.getState().refreshToken;
+    if (!used) return null;
+
+    let res: Response;
     try {
-      const stored = localStorage.getItem("auth-storage");
-      if (!stored) return null;
-
-      const parsed = JSON.parse(stored);
-      const refreshToken = parsed?.state?.refreshToken;
-      if (!refreshToken) return null;
-
-      const res = await fetch(`${this.baseUrl}/auth/refresh`, {
+      res = await fetch(`${this.baseUrl}/auth/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
+        body: JSON.stringify({ refreshToken: used }),
       });
-
-      if (!res.ok) {
-        // Refresh failed — clear auth state
-        localStorage.removeItem("auth-storage");
-        window.location.href = `${import.meta.env.BASE_URL}login`;
-        return null;
-      }
-
-      const data = await res.json();
-      const newState = {
-        ...parsed,
-        state: {
-          ...parsed.state,
-          accessToken: data.data.accessToken,
-          refreshToken: data.data.refreshToken,
-          user: data.data.user,
-        },
-      };
-      localStorage.setItem("auth-storage", JSON.stringify(newState));
-      return data.data.accessToken;
     } catch {
-      localStorage.removeItem("auth-storage");
-      window.location.href = `${import.meta.env.BASE_URL}login`;
-      return null;
+      return null; // offline: keep the session; the request reports the connection problem
     }
+
+    if (res.ok) {
+      const { data } = await res.json();
+      useAuthStore.getState().setTokens(data.accessToken, data.refreshToken, data.user);
+      return data.accessToken;
+    }
+
+    // Another tab may have refreshed first, rotating the token we sent — use its tokens
+    await useAuthStore.persist.rehydrate();
+    const latest = useAuthStore.getState();
+    if (latest.refreshToken && latest.refreshToken !== used && latest.accessToken) return latest.accessToken;
+
+    // The session really ended (expired, revoked, account blocked)
+    latest.logout();
+    window.location.href = `${import.meta.env.BASE_URL}login`;
+    return null;
   }
 
   async request<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
@@ -80,14 +80,22 @@ class ApiClient {
       }
     }
 
-    let res = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...fetchOptions,
-      headers,
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl}${endpoint}`, {
+        ...fetchOptions,
+        headers,
+      });
+    } catch {
+      throw new ApiError("Can't reach the store right now. Check your connection and try again.", 0);
+    }
 
-    // If 401, try token refresh once
-    if (res.status === 401 && !skipAuth) {
-      const newToken = await this.refreshToken();
+    // Expired session: refresh once and retry. If another request already refreshed while
+    // this one was in flight, just retry with the new token.
+    const sentToken = headers["Authorization"]?.slice(7);
+    if (res.status === 401 && !skipAuth && sentToken) {
+      const current = this.getAccessToken();
+      const newToken = current && current !== sentToken ? current : await this.refreshAccessToken();
       if (newToken) {
         headers["Authorization"] = `Bearer ${newToken}`;
         res = await fetch(`${this.baseUrl}${endpoint}`, {
@@ -97,10 +105,14 @@ class ApiClient {
       }
     }
 
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
 
     if (!res.ok) {
-      throw new ApiError(data.message || "Request failed", res.status, data.details);
+      const message =
+        data?.error?.message ||
+        data?.message ||
+        (res.status === 429 ? "Too many requests — please wait a moment and try again" : `Request failed (${res.status})`);
+      throw new ApiError(message, res.status, data?.error?.details ?? data?.details);
     }
 
     return data;

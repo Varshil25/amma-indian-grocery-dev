@@ -1,6 +1,7 @@
 import app from "./app.js";
 import { env } from "./config/env.js";
 import prisma from "./config/database.js";
+import { startDealPricingScheduler } from "./services/deal-pricing.service.js";
 
 const PORT = env.PORT;
 
@@ -9,6 +10,9 @@ async function main() {
     // Test database connection
     await prisma.$connect();
     console.log("Database connected successfully");
+
+    // Apply/revert Hot Deal prices now and every few minutes so deals start and end on time
+    startDealPricingScheduler();
 
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);

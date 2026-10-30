@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { apiClient, ApiError } from "../lib/api-client";
 import { useAuthStore } from "../stores/auth-store";
@@ -26,18 +26,36 @@ interface MessageResponse {
   data: { message: string };
 }
 
+/** Where to go after signing in: the page the shopper was sent away from, else home. */
+function useReturnTo() {
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from;
+  return from && from.startsWith("/") && !from.startsWith("//") && !/^\/(login|signup)\b/.test(from) ? from : "/";
+}
+
+/** Send a signed-out shopper to the login page, returning them here afterwards. */
+export function useRequireLogin() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  return (message = "Please sign in to continue") => {
+    toast.info(message);
+    navigate("/login", { state: { from: location.pathname + location.search } });
+  };
+}
+
 export function useLogin() {
   const navigate = useNavigate();
+  const returnTo = useReturnTo();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   return useMutation({
-    mutationFn: (data: { email: string; password: string }) =>
+    mutationFn: ({ remember: _remember, ...data }: { email: string; password: string; remember?: boolean }) =>
       apiClient.post<AuthResponse>("/auth/login", data, { skipAuth: true }),
-    onSuccess: (res) => {
+    onSuccess: (res, vars) => {
       const { user, accessToken, refreshToken } = res.data;
-      setAuth(user, accessToken, refreshToken);
+      setAuth(user, accessToken, refreshToken, vars.remember ?? true);
       toast.success(`Welcome back, ${user.firstName}!`);
-      navigate("/");
+      navigate(returnTo, { replace: true });
     },
     onError: (error: ApiError) => {
       toast.error(error.message || "Login failed");
@@ -47,6 +65,7 @@ export function useLogin() {
 
 export function useRegister() {
   const navigate = useNavigate();
+  const returnTo = useReturnTo();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   return useMutation({
@@ -62,7 +81,7 @@ export function useRegister() {
       const { user, accessToken, refreshToken } = res.data;
       setAuth(user, accessToken, refreshToken);
       toast.success("Account created! Welcome to Amma Indian Grocery!");
-      navigate("/");
+      navigate(returnTo, { replace: true });
     },
     onError: (error: ApiError) => {
       toast.error(error.message || "Registration failed");
@@ -72,12 +91,14 @@ export function useRegister() {
 
 export function useLogout() {
   const queryClient = useQueryClient();
-  const { refreshToken, logout } = useAuthStore();
+  const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
 
   return useMutation({
+    // Read the token at click time (it may have been refreshed since render) and don't route
+    // logout through the expired-session refresh, which would revoke a different token
     mutationFn: () =>
-      apiClient.post("/auth/logout", { refreshToken }),
+      apiClient.post("/auth/logout", { refreshToken: useAuthStore.getState().refreshToken }, { skipAuth: true }),
     onSettled: () => {
       logout();
       queryClient.clear();

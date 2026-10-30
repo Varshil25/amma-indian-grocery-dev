@@ -1,21 +1,29 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useRegister } from "../../hooks/use-auth";
 import PageHeader from "../../components/PageHeader";
+import { PHONE_HINT, formatUSPhone, isValidOptionalPhone, normalizeUSPhone } from "../../lib/phone";
+
+// Same rules as the API (apps/api/src/validators/auth.validator.ts)
+const name = (label: string) =>
+  z.string().trim().min(1, `${label} is required`).max(50, `${label} must be 50 characters or fewer`);
 
 const signupSchema = z
   .object({
-    firstName: z.string().min(1, "First name is required").max(50),
-    lastName: z.string().min(1, "Last name is required").max(50),
-    email: z.string().email("Invalid email address"),
-    phone: z.string().optional(),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    firstName: name("First name"),
+    lastName: name("Last name"),
+    email: z.string().trim().min(1, "Email is required").email("Invalid email address"),
+    phone: z.string().optional().refine(isValidOptionalPhone, PHONE_HINT),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(72, "Password must be 72 characters or fewer"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
-    referralCode: z.string().optional(),
+    referralCode: z.string().trim().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -28,18 +36,36 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const registerMutation = useRegister();
+  const location = useLocation();
+  // Shared referral links look like /signup?ref=AMMA-XXXXXXXX
+  const [params] = useSearchParams();
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<SignupForm>({
     resolver: zodResolver(signupSchema),
+    defaultValues: { referralCode: params.get("ref") || "" },
   });
 
   const onSubmit = (data: SignupForm) => {
-    const { confirmPassword, ...payload } = data;
-    registerMutation.mutate(payload);
+    const { confirmPassword: _confirm, ...payload } = data;
+    // (non-strict tsconfig makes zod's inferred fields optional; the resolver guarantees them)
+    registerMutation.mutate({
+      ...(payload as Required<Omit<SignupForm, "confirmPassword">>),
+      phone: payload.phone?.trim() || undefined,
+      referralCode: payload.referralCode || undefined,
+    });
+  };
+
+  // Tidy a valid number into (610) 555-0123 when the shopper leaves the field
+  const phoneField = register("phone");
+  const onPhoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const normalized = normalizeUSPhone(e.target.value);
+    if (normalized) setValue("phone", formatUSPhone(normalized));
+    return phoneField.onBlur(e);
   };
 
   return (
@@ -61,7 +87,8 @@ export default function Signup() {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* noValidate: show our own messages instead of the browser's popups */}
+              <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="firstName" className="input-label">
@@ -70,6 +97,8 @@ export default function Signup() {
                     <input
                       id="firstName"
                       type="text"
+                      autoComplete="given-name"
+                      aria-invalid={!!errors.firstName}
                       className={`input ${errors.firstName ? "border-red-400" : ""}`}
                       placeholder="First name"
                       {...register("firstName")}
@@ -87,6 +116,8 @@ export default function Signup() {
                     <input
                       id="lastName"
                       type="text"
+                      autoComplete="family-name"
+                      aria-invalid={!!errors.lastName}
                       className={`input ${errors.lastName ? "border-red-400" : ""}`}
                       placeholder="Last name"
                       {...register("lastName")}
@@ -106,6 +137,8 @@ export default function Signup() {
                   <input
                     id="email"
                     type="email"
+                    autoComplete="email"
+                    aria-invalid={!!errors.email}
                     className={`input ${errors.email ? "border-red-400" : ""}`}
                     placeholder="you@example.com"
                     {...register("email")}
@@ -125,10 +158,19 @@ export default function Signup() {
                   <input
                     id="phone"
                     type="tel"
-                    className="input"
-                    placeholder="(555) 123-4567"
-                    {...register("phone")}
+                    inputMode="tel"
+                    autoComplete="tel"
+                    aria-invalid={!!errors.phone}
+                    className={`input ${errors.phone ? "border-red-400" : ""}`}
+                    placeholder="(610) 555-0123"
+                    {...phoneField}
+                    onBlur={onPhoneBlur}
                   />
+                  {errors.phone ? (
+                    <p className="text-red-500 text-body-sm mt-1">{errors.phone.message}</p>
+                  ) : (
+                    <p className="text-body-sm text-text-200 mt-1">US numbers only. We'll only use it about your orders.</p>
+                  )}
                 </div>
 
                 <div>
@@ -139,6 +181,8 @@ export default function Signup() {
                     <input
                       id="password"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      aria-invalid={!!errors.password}
                       className={`input pr-10 ${errors.password ? "border-red-400" : ""}`}
                       placeholder="Minimum 8 characters"
                       {...register("password")}
@@ -146,6 +190,8 @@ export default function Signup() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showPassword}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-text-200 hover:text-text-400 transition"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -166,6 +212,8 @@ export default function Signup() {
                     <input
                       id="confirmPassword"
                       type={showConfirm ? "text" : "password"}
+                      autoComplete="new-password"
+                      aria-invalid={!!errors.confirmPassword}
                       className={`input pr-10 ${errors.confirmPassword ? "border-red-400" : ""}`}
                       placeholder="Re-enter your password"
                       {...register("confirmPassword")}
@@ -173,6 +221,8 @@ export default function Signup() {
                     <button
                       type="button"
                       onClick={() => setShowConfirm(!showConfirm)}
+                      aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                      aria-pressed={showConfirm}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-text-200 hover:text-text-400 transition"
                     >
                       {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -193,7 +243,8 @@ export default function Signup() {
                   <input
                     id="referralCode"
                     type="text"
-                    className="input"
+                    autoComplete="off"
+                    className="input uppercase"
                     placeholder="e.g. AMMA-ABC12345"
                     {...register("referralCode")}
                   />
@@ -222,6 +273,7 @@ export default function Signup() {
                 Already have an account?{" "}
                 <Link
                   to="/login"
+                  state={location.state}
                   className="text-green-600 hover:text-green-700 font-semibold"
                 >
                   Sign In

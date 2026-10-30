@@ -13,10 +13,14 @@ const envSchema = z.object({
 
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  // Publishable key is public; the storefront reads it from /api/content/store-settings
+  STRIPE_PUBLISHABLE_KEY: z.string().optional(),
 
   SQUARE_ACCESS_TOKEN: z.string().optional(),
   SQUARE_LOCATION_ID: z.string().optional(),
   SQUARE_ENVIRONMENT: z.enum(["sandbox", "production"]).default("sandbox"),
+  // Signature key from the Square webhook subscription; webhooks are rejected without it
+  SQUARE_WEBHOOK_SIGNATURE_KEY: z.string().optional(),
 
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_API_KEY: z.string().optional(),
@@ -27,6 +31,9 @@ const envSchema = z.object({
 
   FRONTEND_URL: z.string().url().default("http://localhost:3000"),
   ADMIN_URL: z.string().url().default("http://localhost:3001"),
+  // Public base URL of this API (used for links to uploaded images). Optional:
+  // falls back to the host of the incoming request.
+  API_PUBLIC_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -2,6 +2,33 @@ import { Request, Response } from "express";
 import { orderService } from "../services/order.service.js";
 
 export class OrderController {
+  async preview(req: Request, res: Response) {
+    const userId = req.user!.userId;
+    const q = await orderService.quote(userId, req.body);
+    res.json({
+      success: true,
+      data: {
+        subtotal: q.subtotal,
+        discountAmount: q.discountAmount,
+        coupon: q.coupon,
+        couponError: q.couponError,
+        rewardPointsUsed: q.rewardPointsUsed,
+        rewardDiscount: q.rewardDiscount,
+        shippingAmount: q.shippingAmount,
+        taxAmount: q.taxAmount,
+        totalAmount: q.totalAmount,
+        taxRate: q.settings.taxRate,
+        freeDeliveryThreshold: q.freeDeliveryThreshold,
+        deliveryFee: q.settings.deliveryFee,
+        deliveryEnabled: q.settings.deliveryEnabled,
+        pickupEnabled: q.settings.pickupEnabled,
+        payOnDeliveryEnabled: q.settings.payOnDeliveryEnabled,
+        onlinePaymentsEnabled: q.settings.onlinePaymentsEnabled,
+        itemCount: q.cart.itemCount,
+      },
+    });
+  }
+
   async createOrder(req: Request, res: Response) {
     const userId = req.user!.userId;
     const result = await orderService.createOrder(userId, req.body);

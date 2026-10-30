@@ -8,7 +8,9 @@ import {
   AlertTriangle,
   Clock,
   Loader2,
+  MessageSquare,
 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -19,6 +21,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useDashboardStats } from "../hooks/use-admin";
+import { errorMessage } from "../lib/utils";
 
 const statusColors: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
@@ -30,7 +33,19 @@ const statusColors: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { data, isLoading } = useDashboardStats();
+  const navigate = useNavigate();
+  const { data, isLoading, isError, error, refetch } = useDashboardStats();
+
+  if (isError) {
+    return (
+      <div className="py-20 text-center">
+        <p className="text-red-600 text-sm mb-3">{errorMessage(error, "Couldn't load the dashboard")}</p>
+        <button onClick={() => refetch()} className="text-sm font-medium text-green-600 hover:underline">
+          Try again
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading || !data) {
     return (
@@ -40,7 +55,7 @@ export default function Dashboard() {
     );
   }
 
-  const { stats, recentOrders } = data;
+  const { stats, recentOrders, daily } = data;
 
   const statCards = [
     {
@@ -71,11 +86,11 @@ export default function Dashboard() {
     },
   ];
 
-  // Mock chart data from stats (in production you'd have a separate endpoint)
-  const chartData = [
-    { name: "Today", orders: stats.todayOrders },
-    { name: "This Month", orders: stats.monthOrders },
-  ];
+  const chartData = daily.map((d) => ({
+    name: new Date(`${d.date}T00:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+    orders: d.orders,
+    revenue: d.revenue,
+  }));
 
   return (
     <div className="space-y-6">
@@ -120,29 +135,29 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Link to="/orders" className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:border-green-300">
           <div className="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center">
             <Clock size={18} className="text-yellow-600" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Pending Orders</p>
+            <p className="text-sm text-gray-500">Open Orders</p>
             <p className="text-xl font-bold text-gray-900">
               {stats.pendingOrders}
             </p>
           </div>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
+        </Link>
+        <Link to="/inventory" className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:border-green-300">
           <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
             <AlertTriangle size={18} className="text-orange-600" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Low Stock Items</p>
+            <p className="text-sm text-gray-500">Low / Out of Stock</p>
             <p className="text-xl font-bold text-gray-900">
               {stats.lowStockProducts}
             </p>
           </div>
-        </div>
+        </Link>
         <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
             <ShoppingCart size={18} className="text-blue-600" />
@@ -154,13 +169,22 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
+        <Link to="/settings?tab=messages" className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4 hover:border-green-300">
+          <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
+            <MessageSquare size={18} className="text-green-600" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Unread Messages</p>
+            <p className="text-xl font-bold text-gray-900">{stats.unreadMessages}</p>
+          </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}
         <div className="lg:col-span-1 bg-white rounded-xl border border-gray-200 p-5">
           <h3 className="text-sm font-semibold text-gray-900 mb-4">
-            Orders Overview
+            Orders — last 14 days
           </h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
@@ -168,11 +192,16 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
                   dataKey="name"
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 10 }}
                   axisLine={false}
+                  interval="preserveStartEnd"
                 />
-                <YAxis tick={{ fontSize: 12 }} axisLine={false} />
-                <Tooltip />
+                <YAxis tick={{ fontSize: 12 }} axisLine={false} allowDecimals={false} />
+                <Tooltip
+                  formatter={(value: number, name: string) =>
+                    name === "revenue" ? [`$${value.toFixed(2)}`, "Revenue"] : [value, "Orders"]
+                  }
+                />
                 <Bar dataKey="orders" fill="#22c55e" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -208,7 +237,8 @@ export default function Dashboard() {
                 {recentOrders.map((order) => (
                   <tr
                     key={order.id}
-                    className="border-b border-gray-50 last:border-0 hover:bg-gray-50"
+                    className="border-b border-gray-50 last:border-0 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate(`/orders?order=${order.id}`)}
                   >
                     <td className="px-5 py-3">
                       <span className="font-medium text-gray-900">
@@ -229,7 +259,7 @@ export default function Dashboard() {
                           statusColors[order.status] || "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {order.status}
+                        {order.status.replace(/_/g, " ")}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-right font-medium text-gray-900">

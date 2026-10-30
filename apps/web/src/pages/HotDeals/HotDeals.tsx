@@ -7,14 +7,11 @@ import { HiChevronDown } from "react-icons/hi";
 import { useSearchParams } from "react-router-dom";
 import { useProducts } from "../../hooks/use-products";
 import { mapProductToCard } from "../../lib/product-helpers";
+import { useActiveDeals } from "../../hooks/use-content";
+import { Flame } from "lucide-react";
 
-// Fallback mock
-import orange from "../../assets/Images/Homepage/orange.png";
-import almond from "../../assets/Images/Homepage/dry fruits.png";
-const mockHotDeals = [
-  { id: 1, name: "Fresh Oranges", category: "Fruits", weight: "1.0 kg", rating: 4.8, price: "8.00", oldPrice: "10.00", img: orange, discount: "20%" },
-  { id: 2, name: "Almond Seeds", category: "Dry Fruits", weight: "500g", rating: 4.6, price: "15.00", oldPrice: "20.00", img: almond, discount: "25%" },
-];
+const dealLabel = (d: { discountType: string; discountValue: number }) =>
+  d.discountType === "PERCENTAGE" ? `${d.discountValue}% off` : `$${d.discountValue.toFixed(2)} off`;
 
 const sortOptions = [
   { value: "", label: "Featured" },
@@ -28,7 +25,8 @@ const HotDeals: React.FC = () => {
   const page = parseInt(searchParams.get("page") || "1");
   const sort = searchParams.get("sort") || "";
 
-  const { data, isLoading, isError } = useProducts({
+  const { data: deals } = useActiveDeals();
+  const { data, isLoading, isError, error, refetch } = useProducts({
     onSale: "true",
     page,
     sort: sort || undefined,
@@ -63,13 +61,32 @@ const HotDeals: React.FC = () => {
       />
 
       <div className="container mx-auto px-4 py-12">
+        {deals && deals.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+            {deals.map((d) => (
+              <div key={d.id} className="relative overflow-hidden rounded-2xl bg-green-50 border border-green-100 p-5 flex gap-4 items-center">
+                {d.bannerImage && <img src={d.bannerImage} alt="" className="w-20 h-20 object-contain rounded-xl bg-white shrink-0" />}
+                <div className="min-w-0">
+                  <p className="text-green-700 text-sm font-semibold flex items-center gap-1">
+                    <Flame size={14} /> {dealLabel(d)}
+                  </p>
+                  <h3 className="text-lg font-semibold text-text-500">{d.name}</h3>
+                  {d.description && <p className="text-text-300 text-sm line-clamp-2">{d.description}</p>}
+                  <p className="text-xs text-text-200 mt-1">
+                    {d.productCount} item{d.productCount === 1 ? "" : "s"} · ends {new Date(d.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
           <div>
             <h2 className="text-h4 md:text-h3 font-semibold text-text-500">
-              Best Deals of the Week
+              On Sale Now
             </h2>
             {data?.pagination && (
-              <p className="text-body-sm text-text-200 mt-1">{data.pagination.total} deals</p>
+              <p className="text-body-sm text-text-200 mt-1">{data.pagination.total} products</p>
             )}
           </div>
 
@@ -98,12 +115,11 @@ const HotDeals: React.FC = () => {
         )}
 
         {isError && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-10">
-            {mockHotDeals.map((item) => (
-              <div key={item.id} className="flex justify-center items-stretch">
-                <ProductCard {...item} />
-              </div>
-            ))}
+          <div className="text-center py-20">
+            <p className="text-text-300 text-body-lg mb-4">{(error as Error)?.message || "We couldn't load deals right now."}</p>
+            <button onClick={() => refetch()} className="btn-primary">
+              Try again
+            </button>
           </div>
         )}
 
@@ -123,11 +139,11 @@ const HotDeals: React.FC = () => {
               </div>
             )}
 
-            <Pagination
+            {data.pagination.totalPages > 1 && <Pagination
               currentPage={data.pagination.page}
               totalPages={data.pagination.totalPages}
               onPageChange={handlePageChange}
-            />
+            />}
           </>
         )}
       </div>

@@ -2,8 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import { contentService } from "../services/content.service.js";
 
 export class ContentController {
-  async getBanners(_req: Request, res: Response, next: NextFunction) {
-    try { res.json({ success: true, data: await contentService.getActiveBanners() }); } catch (err) { next(err); }
+  async getBanners(req: Request, res: Response, next: NextFunction) {
+    const position = typeof req.query.position === "string" ? req.query.position : undefined;
+    try { res.json({ success: true, data: await contentService.getActiveBanners(position) }); } catch (err) { next(err); }
   }
 
   async getPage(req: Request, res: Response, next: NextFunction) {

@@ -19,6 +19,8 @@
     "lint:admin": "npm run lint --workspace=apps/admin",
     "db:migrate": "npm run db:migrate --workspace=apps/api",
     "db:seed": "npm run db:seed --workspace=apps/api",
-    "db:studio": "npm run db:studio --workspace=apps/api"
+    "db:studio": "npm run db:studio --workspace=apps/api",
+    "db:remove-sample-data": "npm run db:remove-sample-data --workspace=apps/api --",
+    "db:normalize-phones": "npm run db:normalize-phones --workspace=apps/api --"
   }
 }

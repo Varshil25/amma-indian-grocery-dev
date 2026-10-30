@@ -12,6 +12,7 @@ import adminRoutes from "./admin.routes.js";
 import dealRoutes from "./deal.routes.js";
 import contentRoutes from "./content.routes.js";
 import posRoutes from "./pos.routes.js";
+import mediaRoutes from "./media.routes.js";
 
 const router = Router();
 
@@ -35,5 +36,6 @@ router.use("/admin", adminRoutes);
 router.use("/deals", dealRoutes);
 router.use("/content", contentRoutes);
 router.use("/pos", posRoutes);
+router.use("/media", mediaRoutes);
 
 export default router;

@@ -1,5 +1,10 @@
 import prisma from "../config/database.js";
 import { NotFoundError } from "../middleware/errorHandler.js";
+import { settingsService } from "./settings.service.js";
+import { formatUSPhone } from "../utils/phone.js";
+
+const esc = (v: unknown) =>
+  String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 export class InvoiceService {
   async generateInvoiceHtml(orderId: string, userId?: string) {
@@ -17,12 +22,14 @@ export class InvoiceService {
     });
 
     if (!order) throw new NotFoundError("Order not found");
+    const store = await settingsService.getAll();
+    const storeName = esc(store.store_name || "Amma Indian Grocery");
 
     const itemRows = order.items
       .map(
         (i) => `
       <tr>
-        <td style="padding:10px;border-bottom:1px solid #e5e7eb">${i.productName}</td>
+        <td style="padding:10px;border-bottom:1px solid #e5e7eb">${esc(i.productName)}</td>
         <td style="padding:10px;border-bottom:1px solid #e5e7eb;text-align:center">${i.quantity}</td>
         <td style="padding:10px;border-bottom:1px solid #e5e7eb;text-align:right">$${Number(i.unitPrice).toFixed(2)}</td>
         <td style="padding:10px;border-bottom:1px solid #e5e7eb;text-align:right">$${Number(i.totalPrice).toFixed(2)}</td>
@@ -32,11 +39,11 @@ export class InvoiceService {
 
     const addressBlock = order.address
       ? `
-      <p style="margin:4px 0">${order.address.firstName} ${order.address.lastName}</p>
-      <p style="margin:4px 0">${order.address.addressLine1}</p>
-      ${order.address.addressLine2 ? `<p style="margin:4px 0">${order.address.addressLine2}</p>` : ""}
-      <p style="margin:4px 0">${order.address.city}, ${order.address.state} ${order.address.zipCode}</p>
-      ${order.address.phone ? `<p style="margin:4px 0">${order.address.phone}</p>` : ""}
+      <p style="margin:4px 0">${esc(order.address.firstName)} ${esc(order.address.lastName)}</p>
+      <p style="margin:4px 0">${esc(order.address.addressLine1)}</p>
+      ${order.address.addressLine2 ? `<p style="margin:4px 0">${esc(order.address.addressLine2)}</p>` : ""}
+      <p style="margin:4px 0">${esc(order.address.city)}, ${esc(order.address.state)} ${esc(order.address.zipCode)}</p>
+      ${order.address.phone ? `<p style="margin:4px 0">${esc(formatUSPhone(order.address.phone))}</p>` : ""}
     `
       : "<p>Pickup order</p>";
 
@@ -67,7 +74,7 @@ export class InvoiceService {
 <body>
   <div class="header">
     <div>
-      <div class="logo">Amma Indian Grocery</div>
+      <div class="logo">${storeName}</div>
       <p style="color:#6b7280;font-size:14px;margin:4px 0">Fresh. Authentic. Delivered.</p>
     </div>
     <div style="text-align:right">
@@ -80,9 +87,9 @@ export class InvoiceService {
   <div class="details">
     <div class="details-block">
       <h4>Bill To</h4>
-      <p style="font-weight:bold">${order.user.firstName} ${order.user.lastName}</p>
-      <p>${order.user.email}</p>
-      ${order.user.phone ? `<p>${order.user.phone}</p>` : ""}
+      <p style="font-weight:bold">${esc(order.user.firstName)} ${esc(order.user.lastName)}</p>
+      <p>${esc(order.user.email)}</p>
+      ${order.user.phone ? `<p>${esc(formatUSPhone(order.user.phone))}</p>` : ""}
     </div>
     <div class="details-block">
       <h4>Ship To</h4>
@@ -116,8 +123,8 @@ export class InvoiceService {
   </table>
 
   <div class="footer">
-    <p>Thank you for shopping with Amma Indian Grocery!</p>
-    <p>Questions? Contact us at support@ammagrocery.com</p>
+    <p>Thank you for shopping with ${storeName}!</p>
+    ${store.store_email ? `<p>Questions? Contact us at ${esc(store.store_email)}</p>` : ""}
   </div>
 </body>
 </html>`;

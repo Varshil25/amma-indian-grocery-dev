@@ -3,6 +3,7 @@ import bgTexture from "../../../assets/Images/Homepage/hero_backrground.png";
 import { HiArrowRight } from "react-icons/hi";
 import { HiShoppingBag } from "react-icons/hi2";
 import { FaLeaf } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const Hero = () => {
   return (
@@ -37,12 +38,12 @@ const Hero = () => {
           </p>
 
           {/* CTA BUTTON */}
-          <button className="group flex items-center gap-2 stroke-green-500 bg-green-500 text-white px-5 md:px-7 h-11 md:h-12 rounded-full text-base font-medium hover:bg-white hover:stroke-green-500 hover:text-green-500 transition-colors duration-200 shadow-md w-fit min-w-[120px] md:min-w-[140px] overflow-hidden relative focus:outline-none border-2 border-transparent hover:border-green-500">
+          <Link to="/all-categories" className="group flex items-center gap-2 stroke-green-500 bg-green-500 text-white px-5 md:px-7 h-11 md:h-12 rounded-full text-base font-medium hover:bg-white hover:stroke-green-500 hover:text-green-500 transition-colors duration-200 shadow-md w-fit min-w-[120px] md:min-w-[140px] overflow-hidden relative focus:outline-none border-2 border-transparent hover:border-green-500">
             <span className="leading-tight">Shop Now</span>
             <span className="inline-flex items-center transition-transform duration-300 ease-out group-hover:translate-x-2">
               <HiArrowRight className="w-5 h-5" />
             </span>
-          </button>
+          </Link>
         </div>
 
         {/* RIGHT IMAGE + BADGES */}

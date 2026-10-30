@@ -2,17 +2,34 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import { HiArrowRight } from "react-icons/hi";
+import { Link } from "react-router-dom";
+import { useActiveDeals, type ActiveDeal } from "../../../hooks/use-content";
 
-// Images (Replace with real paths)
+// Decorative images around the live deal
 import Img1 from "../../../assets/Images/Homepage/left-img-discount.png";
 import Img2 from "../../../assets/Images/Homepage/middle-img-discount.png";
 import Img3 from "../../../assets/Images/Homepage/right-side-discount.png";
 import BasketImg from "../../../assets/Images/Homepage/fruit-basket-cta.png";
 
+const dealHeadline = (d: ActiveDeal) =>
+  d.discountType === "PERCENTAGE"
+    ? `${d.discountValue}% off ${d.productCount === 1 ? "1 item" : `${d.productCount} items`}`
+    : `$${d.discountValue.toFixed(2)} off ${d.productCount === 1 ? "1 item" : `${d.productCount} items`}`;
+
+const endsOn = (d: ActiveDeal) =>
+  `Ends ${new Date(d.endDate).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+
 const DealsSection = () => {
+  const { data: deals } = useActiveDeals();
+  // Feature the deal ending soonest (the API sorts by end date)
+  const deal = deals && deals.length > 0 ? deals[0] : null;
+  const [first, ...restWords] = (deal?.name || "").split(" ");
+
   return (
     <section className="w-full bg-white py-20">
 
+      {deal && (
+      <>
       {/* ================= TOP DEALS GRID (DESKTOP) ================= */}
       <div className="hidden md:flex justify-center gap-6 max-w-[1400px] mx-auto px-6">
         
@@ -20,6 +37,7 @@ const DealsSection = () => {
         <div className="relative w-[280px] h-[640px] text-text-500 rounded-2xl overflow-hidden flex items-center justify-center">
           <img
             src={Img1}
+            alt=""
             className="absolute inset-0 w-full h-full object-cover"
             style={{ opacity: 1 }}
           />
@@ -30,22 +48,24 @@ const DealsSection = () => {
         <div className="relative w-[590px] h-[640px] bg-background-secondary rounded-[30px] overflow-hidden flex items-center justify-center">
           <img
             src={Img2}
+            alt=""
             className="absolute inset-0 w-full h-full object-cover"
             style={{ opacity: 1 }}
           />
 
           <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-[430px]">
-            <h2 className="text-h3 md:text-h2 font-semibold text-text-500 leading-tight w-full flex justify-center">
-              Summer <span className="text-green-500 ml-2">Discount</span>
+            <h2 className="text-h3 md:text-h2 font-semibold text-text-500 leading-tight w-full">
+              {first} {restWords.length > 0 && <span className="text-green-500">{restWords.join(" ")}</span>}
             </h2>
-            <p className="text-body-lg text-text-300 mt-3 w-full flex justify-center">
-              Get Flat 40% discount on all products
+            <p className="text-body-lg text-text-300 mt-3 w-full">
+              {deal.description || dealHeadline(deal)}
             </p>
+            <p className="text-body-sm text-text-200 mt-1 w-full">{deal.description ? `${dealHeadline(deal)} · ` : ""}{endsOn(deal)}</p>
             <div className="w-full flex justify-center">
-              <button className="mt-8 group bg-green-500 text-white px-7 h-14 rounded-full flex items-center justify-center gap-3 hover:bg-green-700 transition">
+              <Link to="/hot-deals" className="mt-8 group bg-green-500 text-white px-7 h-14 rounded-full flex items-center justify-center gap-3 hover:bg-green-700 transition">
                 Shop Now{" "}
                 <HiArrowRight className="group-hover:translate-x-1 transition" />
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -54,6 +74,7 @@ const DealsSection = () => {
         <div className="relative w-[280px] h-[640px] bg-green-500 rounded-[30px] overflow-hidden flex items-center justify-center">
           <img
             src={Img3}
+            alt=""
             className="absolute inset-0 w-full h-full object-cover"
             style={{ opacity: 1 }}
           />
@@ -79,14 +100,14 @@ const DealsSection = () => {
                 {i === 1 && (
                   <div className="absolute inset-0 bg-white/30 backdrop-blur-sm flex flex-col justify-center items-center text-center px-4">
                     <h2 className="text-h5 font-semibold">
-                      Summer <span className="text-green-500">Discount</span>
+                      {first} {restWords.length > 0 && <span className="text-green-500">{restWords.join(" ")}</span>}
                     </h2>
                     <p className="text-caption text-text-500 mt-2">
-                      Flat 40% Off on all products
+                      {dealHeadline(deal)} · {endsOn(deal)}
                     </p>
-                    <button className="mt-4 bg-green-600 text-white px-6 py-2 rounded-full flex items-center gap-2">
+                    <Link to="/hot-deals" className="mt-4 bg-green-600 text-white px-6 py-2 rounded-full flex items-center gap-2">
                       Shop Now <HiArrowRight />
-                    </button>
+                    </Link>
                   </div>
                 )}
               </div>
@@ -95,9 +116,12 @@ const DealsSection = () => {
         </Swiper>
       </div>
 
+      </>
+      )}
+
       {/* ================= BOTTOM CTA BANNER ================= */}
      {/* ================= RESPONSIVE CTA BANNER ================= */}
-<div className="container mt-20 px-3 mx-auto">
+<div className={`container ${deal ? "mt-20" : ""} px-3 mx-auto`}>
   <div
     className="
     relative bg-green-500 rounded-2xl
@@ -127,17 +151,18 @@ const DealsSection = () => {
         Freshness you can trust, Prices you’ll love
       </p>
 
-      <button
+      <Link
+        to="/all-categories"
         className="
           mt-6 sm:mt-8 bg-yellow-500 text-text-500 
           px-6 sm:px-8 h-11 sm:h-14 rounded-full 
-          flex items-center justify-center gap-3 
+          flex items-center justify-center gap-3 w-fit
           text-body-md sm:text-body-lg hover:bg-yellow-300 transition
           mx-auto md:mx-0
         "
       >
         Shop Now <HiArrowRight className="text-lg sm:text-xl" />
-      </button>
+      </Link>
     </div>
 
     {/* IMAGE (Desktop + Tablet absolute) */}

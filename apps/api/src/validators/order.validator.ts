@@ -6,6 +6,13 @@ export const createOrderSchema = z.object({
   notes: z.string().max(500).optional(),
   couponCode: z.string().max(50).optional(),
   rewardPointsToRedeem: z.number().int().min(0).default(0),
+  paymentMethod: z.enum(["PAY_ON_DELIVERY", "CARD"]).default("PAY_ON_DELIVERY"),
+});
+
+export const orderPreviewSchema = z.object({
+  fulfillmentType: z.enum(["DELIVERY", "PICKUP"]).default("DELIVERY"),
+  couponCode: z.string().max(50).optional(),
+  rewardPointsToRedeem: z.number().int().min(0).default(0),
 });
 
 export const orderListQuerySchema = z.object({

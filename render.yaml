@@ -4,7 +4,8 @@ services:
     runtime: node
     plan: free
     rootDir: apps/api
-    buildCommand: npm install --include=dev && npm run build
+    # db push applies additive schema changes; it refuses (and fails the build) rather than drop data
+    buildCommand: npm install --include=dev && npx prisma db push --skip-generate && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
@@ -22,3 +23,13 @@ services:
         value: https://varshil25.github.io
       - key: ADMIN_URL
         value: https://varshil25.github.io
+      # Optional — online card payments are offered only when both Stripe keys are set
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      # Optional — emails are only logged until this is set
+      - key: SENDGRID_API_KEY
+        sync: false
