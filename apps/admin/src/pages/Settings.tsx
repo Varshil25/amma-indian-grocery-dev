@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "../lib/api-client";
-import { errorMessage } from "../lib/utils";
+import { errorMessage, formatPhone } from "../lib/utils";
 
 interface SyncStatus {
   squareConfigured: boolean;
@@ -489,7 +489,7 @@ export default function Settings() {
                           )}
                         </div>
                         <p className="text-xs text-gray-500 mb-1">
-                          {msg.email} {msg.phone && `· ${msg.phone}`}
+                          {msg.email} {msg.phone && `· ${formatPhone(msg.phone)}`}
                         </p>
                         {msg.subject && (
                           <p className="text-sm font-medium text-gray-700 mb-1">{msg.subject}</p>

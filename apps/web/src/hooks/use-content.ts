@@ -100,6 +100,21 @@ export function useActiveDeals() {
 }
 
 /** Store hours saved in Admin → Settings; days without hours are dropped. */
+/**
+ * Groups consecutive days with the same hours: ["Mon–Sat 9:00 AM - 8:00 PM", "Sun 10:00 AM - 6:00 PM"].
+ */
+export function summarizeStoreHours(hours: { day: string; time: string }[]): string[] {
+  const short = (d: string) => d.trim().slice(0, 3);
+  const groups: { from: string; to: string; time: string }[] = [];
+  for (const h of hours) {
+    const time = h.time.trim();
+    const last = groups[groups.length - 1];
+    if (last && last.time.toLowerCase() === time.toLowerCase()) last.to = h.day;
+    else groups.push({ from: h.day, to: h.day, time });
+  }
+  return groups.map((g) => `${g.from === g.to ? short(g.from) : `${short(g.from)}–${short(g.to)}`} ${g.time}`);
+}
+
 export function parseStoreHours(raw?: string): { day: string; time: string }[] {
   if (!raw) return [];
   try {

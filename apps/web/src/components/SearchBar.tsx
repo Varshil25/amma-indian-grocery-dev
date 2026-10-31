@@ -73,7 +73,7 @@ export default function SearchBar({ onClose, className = "" }: SearchBarProps) {
 
       {/* Autocomplete dropdown */}
       {isOpen && results && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-text-50 rounded-xl shadow-lg z-50 max-h-[400px] overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 min-w-[18rem] mt-1 bg-white border border-text-50 rounded-xl shadow-lg z-50 max-h-[400px] overflow-y-auto">
           {results.map((item) => (
             <button
               key={item.id}
@@ -107,7 +107,7 @@ export default function SearchBar({ onClose, className = "" }: SearchBarProps) {
       )}
 
       {isOpen && query.length >= 2 && results && results.length === 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-text-50 rounded-xl shadow-lg z-50 p-6 text-center">
+        <div className="absolute top-full left-0 right-0 min-w-[18rem] mt-1 bg-white border border-text-50 rounded-xl shadow-lg z-50 p-6 text-center">
           <p className="text-text-300 text-body-sm">No products found for "{query}"</p>
         </div>
       )}

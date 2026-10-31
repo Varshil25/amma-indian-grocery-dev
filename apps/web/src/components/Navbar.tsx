@@ -33,15 +33,19 @@ const Navbar = () => {
   }, []);
 
   const navItems = [
-    { label: "Home", icon: <HiHome className="w-5 h-5" />, path: "/" },
+    { label: "Home", icon: <HiHome className="w-5 h-5 shrink-0" />, path: "/" },
     {
       label: "Hot deals",
-      icon: <HiFire className="w-5 h-5" />,
+      icon: <HiFire className="w-5 h-5 shrink-0" />,
       path: "/hot-deals",
     },
     { label: "About Us", path: "/about" },
     { label: "Contact Us", path: "/contact" },
   ];
+
+  // The desktop header must fit on one line from 1024px (lg) up, signed in or out. Between lg
+  // and xl it uses tighter spacing, hides the nav icons and the account name, and shortens
+  // "All Categories"; from xl everything is shown.
 
   const initials = user
     ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
@@ -49,38 +53,43 @@ const Navbar = () => {
 
   return (
     <header className="w-full bg-white shadow-sm fixed top-0 left-0 z-50">
-      <div className="container mx-auto flex items-center justify-between py-3 px-6">
+      <div className="container mx-auto flex items-center justify-between gap-4 py-3 px-6">
         {/* Logo */}
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="flex items-center shrink-0" aria-label="Amma Grocery home">
           <img src={navbarLogo} className="w-12 h-auto" alt="Amma Grocery" />
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-10">
+        <nav className="hidden lg:flex items-center gap-5 xl:gap-8 2xl:gap-10" aria-label="Main">
           {navItems.map((item, i) => (
             <Link
               key={i}
               to={item.path}
-              className={`flex items-center gap-2 text-caption transition ${
+              aria-current={pathname === item.path ? "page" : undefined}
+              className={`flex items-center gap-2 text-caption whitespace-nowrap transition ${
                 pathname === item.path
                   ? "text-green-500"
                   : "text-text-500 hover:text-green-500"
               }`}
             >
-              {item.icon} {item.label}
+              {item.icon && <span className="hidden xl:inline-flex">{item.icon}</span>}
+              {item.label}
             </Link>
           ))}
         </nav>
 
         {/* Right side: Search + Categories + Auth */}
-        <div className="hidden lg:flex items-center gap-4">
-          <SearchBar className="w-64" />
+        <div className="hidden lg:flex items-center gap-2 xl:gap-3 2xl:gap-4">
+          <SearchBar className="w-52 xl:w-56 2xl:w-64" />
           <Link
             to="/all-categories"
-            className="bg-green-500 text-label text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition"
+            className="bg-green-500 text-label text-white px-4 py-2 rounded-lg flex items-center gap-2 whitespace-nowrap hover:bg-green-700 transition"
           >
-            <MdViewModule className="w-5 h-5" />
-            <span>All Categories</span>
+            <MdViewModule className="w-5 h-5 shrink-0" />
+            {/* "All " is dropped below xl so the button fits; one label, no hidden duplicate */}
+            <span>
+              <span className="hidden xl:inline">All </span>Categories
+            </span>
           </Link>
 
           {/* Wishlist */}
@@ -88,6 +97,7 @@ const Navbar = () => {
             to="/wishlist"
             className="relative p-2 rounded-lg text-text-300 hover:text-red-500 hover:bg-red-50 transition"
             title="Wishlist"
+            aria-label="Wishlist"
           >
             <Heart size={20} />
           </Link>
@@ -97,6 +107,7 @@ const Navbar = () => {
             onClick={openDrawer}
             className="relative p-2 rounded-lg text-text-300 hover:text-green-600 hover:bg-green-50 transition"
             title="Cart"
+            aria-label={cartCount > 0 ? `Cart, ${cartCount} item${cartCount === 1 ? "" : "s"}` : "Cart"}
           >
             <ShoppingBag size={20} />
             {cartCount > 0 && (
@@ -110,7 +121,10 @@ const Navbar = () => {
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-background-secondary transition"
+                aria-label={`Account menu for ${user.firstName}`}
+                aria-expanded={userMenuOpen}
+                aria-haspopup="menu"
+                className="flex items-center gap-2 px-2 xl:px-3 py-2 rounded-lg hover:bg-background-secondary transition"
               >
                 {user.avatar ? (
                   <img
@@ -119,11 +133,11 @@ const Navbar = () => {
                     className="w-8 h-8 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-body-sm font-semibold">
+                  <div className="w-8 h-8 shrink-0 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-body-sm font-semibold">
                     {initials}
                   </div>
                 )}
-                <span className="text-body-sm font-medium text-text-500 max-w-[100px] truncate">
+                <span className="hidden xl:block text-body-sm font-medium text-text-500 max-w-[100px] truncate">
                   {user.firstName}
                 </span>
                 <ChevronDown
@@ -184,7 +198,7 @@ const Navbar = () => {
           ) : (
             <Link
               to="/login"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-green-500 text-green-600 hover:bg-green-50 transition text-body-sm font-medium"
+              className="flex items-center gap-2 px-3 xl:px-4 py-2 rounded-lg border border-green-500 text-green-600 hover:bg-green-50 transition text-body-sm font-medium whitespace-nowrap"
             >
               <User size={16} />
               Login
@@ -194,8 +208,10 @@ const Navbar = () => {
 
         {/* Mobile Toggle */}
         <button
-          className="lg:hidden text-3xl text-text-500 transition"
+          className="lg:hidden text-3xl text-text-500 transition p-2 -mr-2"
           onClick={() => setOpen(!open)}
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
         >
           {open ? <HiX className="w-7 h-7" /> : <HiMenuAlt3 />}
         </button>
