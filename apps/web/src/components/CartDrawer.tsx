@@ -27,7 +27,7 @@ export default function CartDrawer() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-text-50">
           <div className="flex items-center gap-3">
             <ShoppingBag size={22} className="text-green-600" />
-            <h2 className="text-h5 font-semibold text-text-500">
+            <h2 className="text-h6 font-semibold text-text-500">
               Your Cart
               {cart?.itemCount ? (
                 <span className="text-body-sm text-text-200 font-normal ml-2">

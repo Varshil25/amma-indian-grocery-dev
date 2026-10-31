@@ -29,7 +29,7 @@ export default function StaticPage() {
           title={fallbackTitle}
           breadcrumbs={[{ label: "Home", href: "/" }, { label: fallbackTitle }]}
         />
-        <div className="container mx-auto px-6 py-20 flex justify-center">
+        <div className="container mx-auto px-4 sm:px-6 py-16 md:py-20 flex justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-green-500" />
         </div>
       </>
@@ -43,7 +43,7 @@ export default function StaticPage() {
           title={fallbackTitle}
           breadcrumbs={[{ label: "Home", href: "/" }, { label: fallbackTitle }]}
         />
-        <div className="container mx-auto px-6 py-20 text-center">
+        <div className="container mx-auto px-4 sm:px-6 py-16 md:py-20 text-center">
           <FileText size={48} className="mx-auto text-text-100 mb-4" />
           <h2 className="text-h5 font-semibold text-text-500 mb-2">Coming Soon</h2>
           <p className="text-text-300 text-body-lg">
@@ -61,8 +61,8 @@ export default function StaticPage() {
         title={page.title}
         breadcrumbs={[{ label: "Home", href: "/" }, { label: page.title }]}
       />
-      <div className="container mx-auto px-6 py-10">
-        <div className="max-w-3xl mx-auto prose prose-green text-text-400 leading-relaxed whitespace-pre-line">
+      <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12">
+        <div className="max-w-3xl mx-auto text-body-md sm:text-body-lg text-text-400 whitespace-pre-line [overflow-wrap:anywhere]">
           {page.content}
         </div>
       </div>

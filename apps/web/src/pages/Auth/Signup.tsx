@@ -75,9 +75,9 @@ export default function Signup() {
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Sign Up" }]}
       />
       <section className="section-padding">
-        <div className="container mx-auto px-6 flex justify-center">
+        <div className="container mx-auto px-4 sm:px-6 flex justify-center">
           <div className="w-full max-w-lg">
-            <div className="card p-8">
+            <div className="card p-5 sm:p-8">
               <div className="text-center mb-8">
                 <h2 className="text-h4 font-semibold text-text-500 mb-2">
                   Join Amma Indian Grocery

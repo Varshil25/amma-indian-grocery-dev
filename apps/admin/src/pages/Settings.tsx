@@ -224,14 +224,15 @@ export default function Settings() {
       <h2 className="text-lg font-semibold text-gray-900">Settings</h2>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+      <div className="grid grid-cols-2 sm:flex gap-1 bg-gray-100 rounded-lg p-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition flex-1 justify-center ${
+              aria-current={activeTab === tab.id ? "page" : undefined}
+              className={`flex items-center gap-2 px-3 sm:px-4 py-2 min-h-[40px] text-sm font-medium rounded-md transition flex-1 justify-center whitespace-nowrap ${
                 activeTab === tab.id
                   ? "bg-white text-gray-900 shadow-sm"
                   : "text-gray-500 hover:text-gray-700"
@@ -254,7 +255,7 @@ export default function Settings() {
           ) : (
             <>
               {/* Basic Info */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4">
                 <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                   <Store size={18} /> Store Information
                 </h3>
@@ -304,14 +305,14 @@ export default function Settings() {
               </div>
 
               {/* Store Hours */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4">
                 <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                   <Clock size={18} /> Store Hours
                 </h3>
                 <div className="space-y-3">
                   {hours.map((item, idx) => (
                     <div key={idx} className="flex items-center gap-3">
-                      <span className="w-28 text-sm font-medium text-gray-700">{item.day}</span>
+                      <span className="w-24 sm:w-28 shrink-0 text-sm font-medium text-gray-700">{item.day}</span>
                       <input
                         value={item.time}
                         onChange={(e) => {
@@ -328,7 +329,7 @@ export default function Settings() {
               </div>
 
               {/* Social Links */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4">
                 <h3 className="text-base font-semibold text-gray-900">Social Media Links</h3>
                 <div className="space-y-3">
                   <div>
@@ -380,7 +381,7 @@ export default function Settings() {
             </div>
           ) : (
             <>
-              <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4">
                 <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                   <ShoppingCart size={18} /> Prices & delivery
                 </h3>
@@ -542,7 +543,7 @@ export default function Settings() {
       {/* POS Tab */}
       {activeTab === "pos" && (
         <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
                 <Wifi size={20} className="text-blue-600" />
@@ -610,7 +611,7 @@ export default function Settings() {
 
           {/* Actions */}
           {posData?.squareConfigured && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4">
               <h3 className="text-base font-semibold text-gray-900">Sync Actions</h3>
 
               {/* Import Catalog from Square */}
@@ -682,7 +683,7 @@ export default function Settings() {
 
           {/* Webhook Info */}
           {posData?.squareConfigured && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
               <h3 className="text-base font-semibold text-gray-900 mb-2">Webhook Endpoints</h3>
               <p className="text-xs text-gray-500 mb-3">
                 Configure these URLs in your Square Developer Dashboard for real-time sync:

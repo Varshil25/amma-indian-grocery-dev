@@ -318,7 +318,7 @@ export default function Products() {
           <p className="px-4 py-12 text-center text-red-600 text-sm">{errorMessage(error, "Couldn't load products")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-cards w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Product</th>
@@ -346,18 +346,20 @@ export default function Products() {
                         <span className="font-medium text-gray-900 line-clamp-1">{product.name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">{product.sku}</td>
-                    <td className="px-4 py-3 text-gray-600">{product.category}</td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      {product.inDeal && (
-                        <Flame size={12} className="inline text-orange-500 mr-1" aria-label="Hot deal price" />
-                      )}
-                      <span className="font-medium text-gray-900">{money(product.price)}</span>
-                      {product.compareAtPrice && (
-                        <span className="text-xs text-gray-400 line-through ml-1">{money(product.compareAtPrice)}</span>
-                      )}
+                    <td data-label="SKU" className="px-4 py-3 text-gray-500 font-mono text-xs">{product.sku}</td>
+                    <td data-label="Category" className="px-4 py-3 text-gray-600">{product.category}</td>
+                    <td data-label="Price" className="px-4 py-3 text-right whitespace-nowrap">
+                      <span>
+                        {product.inDeal && (
+                          <Flame size={12} className="inline text-orange-500 mr-1" aria-label="Hot deal price" />
+                        )}
+                        <span className="font-medium text-gray-900">{money(product.price)}</span>
+                        {product.compareAtPrice && (
+                          <span className="text-xs text-gray-400 line-through ml-1">{money(product.compareAtPrice)}</span>
+                        )}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td data-label="Available" className="px-4 py-3 text-right">
                       {product.stock !== null ? (
                         <span
                           className={`font-medium ${
@@ -370,7 +372,7 @@ export default function Products() {
                         <span className="text-gray-400">-</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td data-label="Status" className="px-4 py-3 text-center">
                       {product.isActive ? (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
                           <Eye size={12} /> Active
@@ -381,14 +383,14 @@ export default function Products() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td data-label="Featured" className="px-4 py-3 text-center">
                       {product.isFeatured && <Star size={16} className="text-yellow-500 fill-yellow-400 mx-auto" />}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td data-actions className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
                           onClick={() => openEdit(product.id)}
-                          className="text-blue-500 hover:text-blue-600 p-1"
+                          className="text-blue-500 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100 transition"
                           title="Edit"
                           aria-label={`Edit ${product.name}`}
                         >
@@ -397,7 +399,7 @@ export default function Products() {
                         {product.isActive ? (
                           <button
                             onClick={() => handleDeactivate(product.id, product.name)}
-                            className="text-red-500 hover:text-red-600 p-1"
+                            className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-gray-100 transition"
                             title="Hide from store"
                             aria-label={`Hide ${product.name}`}
                           >
@@ -406,7 +408,7 @@ export default function Products() {
                         ) : (
                           <button
                             onClick={() => handleReactivate(product.id)}
-                            className="text-green-600 hover:text-green-700 p-1"
+                            className="text-green-600 hover:text-green-700 p-2 rounded-lg hover:bg-gray-100 transition"
                             title="Reactivate"
                             aria-label={`Reactivate ${product.name}`}
                           >

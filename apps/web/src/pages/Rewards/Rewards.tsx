@@ -145,23 +145,24 @@ export default function Rewards() {
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Rewards" }]}
       />
 
-      <div className="container mx-auto px-6 py-10">
+      <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12">
         {/* Tabs */}
-        <div className="flex gap-1 bg-text-50 p-1 rounded-xl mb-8 max-w-lg">
+        <div className="flex gap-1 bg-text-50 p-1 rounded-xl mb-6 md:mb-8 max-w-lg">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-body-sm font-medium transition ${
+                aria-current={activeTab === tab.key ? "page" : undefined}
+                className={`flex-1 min-w-0 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 min-h-[44px] rounded-lg text-body-xs sm:text-body-sm font-medium transition ${
                   activeTab === tab.key
                     ? "bg-white text-green-600 shadow-sm"
                     : "text-text-300 hover:text-text-500"
                 }`}
               >
-                <Icon size={16} />
-                <span className="hidden sm:inline">{tab.label}</span>
+                <Icon size={16} aria-hidden="true" />
+                <span>{tab.label}</span>
               </button>
             );
           })}
@@ -177,7 +178,7 @@ export default function Rewards() {
             ) : account ? (
               <>
                 {/* Points + Tier Card */}
-                <div className={`card p-8 ${tierColors.bg} border-none`}>
+                <div className={`card p-5 sm:p-8 ${tierColors.bg} border-none`}>
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                     <div>
                       <div className="flex items-center gap-3 mb-2">
@@ -194,7 +195,7 @@ export default function Rewards() {
                         </div>
                       </div>
                       <div className="mt-4">
-                        <p className="text-h2 font-bold text-text-500">
+                        <p className="text-h3 font-bold text-text-500">
                           {account.availablePoints.toLocaleString()}
                         </p>
                         <p className="text-body-sm text-text-200">Available Points</p>
@@ -237,7 +238,7 @@ export default function Rewards() {
                       </div>
                       <span className="text-body-sm text-text-200">Total Earned</span>
                     </div>
-                    <p className="text-h4 font-bold text-text-500">
+                    <p className="text-h5 font-bold text-text-500">
                       {account.totalPoints.toLocaleString()}
                     </p>
                   </div>
@@ -248,7 +249,7 @@ export default function Rewards() {
                       </div>
                       <span className="text-body-sm text-text-200">Lifetime Spend</span>
                     </div>
-                    <p className="text-h4 font-bold text-text-500">
+                    <p className="text-h5 font-bold text-text-500">
                       ${account.lifetimeSpend.toFixed(0)}
                     </p>
                   </div>
@@ -259,7 +260,7 @@ export default function Rewards() {
                       </div>
                       <span className="text-body-sm text-text-200">Redemption Value</span>
                     </div>
-                    <p className="text-h4 font-bold text-text-500">
+                    <p className="text-h5 font-bold text-text-500">
                       ${account.redemptionValue.toFixed(2)}
                     </p>
                     <p className="text-body-xs text-text-100 mt-0.5">
@@ -269,7 +270,7 @@ export default function Rewards() {
                 </div>
 
                 {/* How to Earn */}
-                <div className="card p-6">
+                <div className="card p-4 sm:p-6">
                   <h3 className="text-h6 font-semibold text-text-500 mb-4">Ways to Earn Points</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
@@ -292,7 +293,7 @@ export default function Rewards() {
 
                 {/* Referral Quick Card */}
                 {referral && (
-                  <div className="card p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-100">
+                  <div className="card p-4 sm:p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-100">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
                         <h3 className="text-h6 font-semibold text-text-500 mb-1">
@@ -406,7 +407,7 @@ export default function Rewards() {
               return (
                 <div
                   key={tier.tier}
-                  className={`card p-6 ${isCurrent ? `${colors.bg} ring-2 ${colors.ring}` : ""}`}
+                  className={`card p-4 sm:p-6 ${isCurrent ? `${colors.bg} ring-2 ${colors.ring}` : ""}`}
                 >
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`w-12 h-12 rounded-full ${colors.bg} flex items-center justify-center`}>
@@ -457,9 +458,9 @@ export default function Rewards() {
             ) : referral ? (
               <>
                 {/* Referral Code Card */}
-                <div className="card p-8 bg-gradient-to-r from-green-50 to-emerald-50 border-green-100 text-center">
+                <div className="card p-5 sm:p-8 bg-gradient-to-r from-green-50 to-emerald-50 border-green-100 text-center">
                   <Users size={40} className="mx-auto text-green-600 mb-3" />
-                  <h3 className="text-h5 font-semibold text-text-500 mb-2">
+                  <h3 className="text-h6 font-semibold text-text-500 mb-2">
                     Your Referral Code
                   </h3>
                   <p className="text-body-sm text-text-200 mb-4 max-w-md mx-auto">
@@ -469,7 +470,7 @@ export default function Rewards() {
                     onClick={copyReferralCode}
                     className="inline-flex items-center gap-3 bg-white px-8 py-4 rounded-xl border-2 border-green-200 hover:border-green-400 transition"
                   >
-                    <span className="font-mono text-h4 font-bold text-green-700 tracking-wider">
+                    <span className="font-mono text-h5 font-bold text-green-700 tracking-wider [overflow-wrap:anywhere]">
                       {referral.referralCode}
                     </span>
                     {copied ? (
@@ -489,19 +490,19 @@ export default function Rewards() {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="card p-5 text-center">
-                    <p className="text-h3 font-bold text-text-500">
+                    <p className="text-h5 font-bold text-text-500">
                       {referral.totalReferrals}
                     </p>
                     <p className="text-body-xs text-text-200">Total Referrals</p>
                   </div>
                   <div className="card p-5 text-center">
-                    <p className="text-h3 font-bold text-green-600">
+                    <p className="text-h5 font-bold text-green-600">
                       {referral.completedReferrals}
                     </p>
                     <p className="text-body-xs text-text-200">Completed</p>
                   </div>
                   <div className="card p-5 text-center">
-                    <p className="text-h3 font-bold text-purple-600">
+                    <p className="text-h5 font-bold text-purple-600">
                       {referral.totalBonusEarned.toLocaleString()}
                     </p>
                     <p className="text-body-xs text-text-200">Points Earned</p>
@@ -560,7 +561,7 @@ export default function Rewards() {
                     </div>
                   </div>
                 ) : (
-                  <div className="card p-8 text-center">
+                  <div className="card p-5 sm:p-8 text-center">
                     <p className="text-text-200 text-body-sm">
                       No referrals yet. Share your code to start earning!
                     </p>

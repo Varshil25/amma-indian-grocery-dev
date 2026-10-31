@@ -42,9 +42,9 @@ export default function ForgotPassword() {
         ]}
       />
       <section className="section-padding">
-        <div className="container mx-auto px-6 flex justify-center">
+        <div className="container mx-auto px-4 sm:px-6 flex justify-center">
           <div className="w-full max-w-md">
-            <div className="card p-8">
+            <div className="card p-5 sm:p-8">
               {submitted ? (
                 <div className="text-center py-6">
                   <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">

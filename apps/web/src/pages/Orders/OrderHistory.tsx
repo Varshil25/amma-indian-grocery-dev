@@ -115,7 +115,7 @@ export default function OrderHistory() {
         breadcrumbs={[{ label: "Home", href: "/" }, { label: "Orders" }]}
       />
 
-      <div className="container mx-auto px-6 py-10">
+      <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12">
         {/* Status Filter Tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {STATUS_TABS.map((tab) => (

@@ -136,7 +136,7 @@ export default function Coupons() {
           <p className="px-4 py-12 text-center text-red-600 text-sm">{errorMessage(error, "Couldn't load coupons")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-cards w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Code</th>
@@ -162,19 +162,19 @@ export default function Coupons() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-700">
+                      <td data-label="Discount" className="px-4 py-3 text-gray-700">
                         {describe(c)}
                         {c.maximumDiscount ? <span className="text-xs text-gray-400"> (max {money(c.maximumDiscount)})</span> : null}
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-500">{c.minimumOrder ? money(c.minimumOrder) : "-"}</td>
-                      <td className="px-4 py-3 text-center text-gray-600">
+                      <td data-label="Min order" className="px-4 py-3 text-right text-gray-500">{c.minimumOrder ? money(c.minimumOrder) : "-"}</td>
+                      <td data-label="Used" className="px-4 py-3 text-center text-gray-600">
                         {c.usedCount}
                         {c.usageLimit ? ` / ${c.usageLimit}` : ""}
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                      <td data-label="Valid" className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
                         {new Date(c.startDate).toLocaleDateString()} – {new Date(c.endDate).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td data-label="Status" className="px-4 py-3 text-center">
                         <button
                           onClick={() =>
                             updateCoupon.mutate(
@@ -188,12 +188,12 @@ export default function Coupons() {
                           {st.label}
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td data-actions className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => openEdit(c)} className="text-blue-500 hover:text-blue-600 p-1" aria-label={`Edit ${c.code}`}>
+                          <button onClick={() => openEdit(c)} className="text-blue-500 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100 transition" aria-label={`Edit ${c.code}`}>
                             <Pencil size={15} />
                           </button>
-                          <button onClick={() => handleDelete(c)} className="text-red-500 hover:text-red-600 p-1" aria-label={`Delete ${c.code}`}>
+                          <button onClick={() => handleDelete(c)} className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-gray-100 transition" aria-label={`Delete ${c.code}`}>
                             <Trash2 size={15} />
                           </button>
                         </div>

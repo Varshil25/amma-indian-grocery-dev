@@ -4,8 +4,96 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
-  @apply bg-white text-text-900 font-poppins;
+  @apply bg-white text-text-900 font-poppins antialiased;
+}
+
+/* Form fields inside a flex row may shrink instead of pushing the row wider than the screen */
+input,
+select,
+textarea {
+  min-width: 0;
+}
+
+/* iPhones zoom the page in when a field with text smaller than 16px is tapped; keep every field
+   at 16px on small screens so that never happens. (Outside any layer, and specific enough to win
+   over text-sm and friends.) */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select:not([hidden]),
+  textarea:not([hidden]) {
+    font-size: 16px;
+  }
+}
+
+/* ----------- TABLES THAT BECOME CARDS ON PHONES -----------
+   Add `table-cards` to a <table> and `data-label="Column name"` to its cells. Below 768px each
+   row turns into a card: the first cell is the card's title, every other cell is a
+   "Label ........ value" line, and the cell marked `data-actions` holds the buttons at the bottom. */
+@media (max-width: 767px) {
+  .table-cards thead {
+    @apply sr-only;
+  }
+  .table-cards,
+  .table-cards tbody,
+  .table-cards tr {
+    display: block;
+    width: 100%;
+  }
+  .table-cards tbody tr {
+    @apply border-b border-gray-100 px-4 py-3 last:border-0;
+  }
+  /* label on the left, the cell's content stacked on the right */
+  .table-cards tbody td {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    align-items: center;
+    justify-items: end;
+    @apply gap-x-4 px-0 py-1 text-right;
+  }
+  .table-cards tbody td > * {
+    grid-column: 2;
+  }
+  .table-cards tbody td::before {
+    content: attr(data-label);
+    grid-column: 1;
+    justify-self: start;
+    @apply text-xs font-medium uppercase text-gray-500;
+  }
+  /* a cell with nothing in it (e.g. "Featured" when the product isn't) is left out */
+  .table-cards tbody td:empty {
+    display: none;
+  }
+  /* first cell = the card title */
+  .table-cards tbody td:first-child {
+    display: block;
+    justify-items: normal;
+    @apply text-left pt-0 pb-2;
+  }
+  .table-cards tbody td:first-child::before,
+  .table-cards tbody td[data-actions]::before,
+  .table-cards tbody td[colspan]::before {
+    content: none;
+  }
+  /* the row of action buttons */
+  .table-cards tbody td[data-actions] {
+    display: flex;
+    @apply justify-end border-t border-gray-50 mt-2 pt-2;
+  }
+  /* "No results" rows span the whole table */
+  .table-cards tbody td[colspan] {
+    display: block;
+    justify-items: normal;
+    @apply text-center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }

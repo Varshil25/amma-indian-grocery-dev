@@ -132,7 +132,7 @@ export default function Inventory() {
           <p className="px-4 py-12 text-center text-red-600 text-sm">{errorMessage(error, "Couldn't load inventory")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-cards w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Product</th>
@@ -161,11 +161,11 @@ export default function Inventory() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 font-mono text-xs">{item.sku}</td>
-                      <td className="px-4 py-3 text-right font-medium text-gray-900">{item.stockQuantity}</td>
-                      <td className="px-4 py-3 text-right text-gray-500">{item.reservedQuantity}</td>
-                      <td className={`px-4 py-3 text-right font-semibold ${isOut ? "text-red-600" : isLow ? "text-orange-600" : "text-green-600"}`}>{item.available}</td>
-                      <td className="px-4 py-3 text-center">
+                      <td data-label="SKU" className="px-4 py-3 text-gray-500 font-mono text-xs">{item.sku}</td>
+                      <td data-label="In stock" className="px-4 py-3 text-right font-medium text-gray-900">{item.stockQuantity}</td>
+                      <td data-label="Reserved" className="px-4 py-3 text-right text-gray-500">{item.reservedQuantity}</td>
+                      <td data-label="Available" className={`px-4 py-3 text-right font-semibold ${isOut ? "text-red-600" : isLow ? "text-orange-600" : "text-green-600"}`}>{item.available}</td>
+                      <td data-label="Status" className="px-4 py-3 text-center">
                         {isOut ? (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 px-2 py-0.5 rounded-full">
                             <AlertTriangle size={11} /> Out
@@ -178,7 +178,7 @@ export default function Inventory() {
                           <span className="text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">OK</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td data-actions className="px-4 py-3 text-center">
                         <button onClick={() => open(item)} className="text-xs font-medium text-green-600 hover:underline" aria-label={`Adjust ${item.productName}`}>
                           Adjust
                         </button>

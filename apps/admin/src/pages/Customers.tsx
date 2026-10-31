@@ -79,7 +79,7 @@ export default function Customers() {
           <p className="px-4 py-12 text-center text-red-600 text-sm">{errorMessage(error, "Couldn't load customers")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-cards w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">
@@ -120,17 +120,17 @@ export default function Customers() {
                           {customer.name}
                         </span>
                         {!customer.isActive && (
-                          <span className="text-[10px] font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Blocked</span>
+                          <span className="text-xs font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Blocked</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td data-label="Email" className="px-4 py-3">
                       <div className="flex items-center gap-1.5 text-gray-600">
                         <Mail size={13} className="text-gray-400" />
                         {customer.email}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td data-label="Phone" className="px-4 py-3">
                       {customer.phone ? (
                         <div className="flex items-center gap-1.5 text-gray-600">
                           <Phone size={13} className="text-gray-400" />
@@ -140,13 +140,13 @@ export default function Customers() {
                         <span className="text-gray-400">-</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td data-label="Orders" className="px-4 py-3 text-center">
                       <div className="inline-flex items-center gap-1 text-gray-700">
                         <ShoppingCart size={13} className="text-gray-400" />
                         {customer.orderCount}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td data-label="Joined" className="px-4 py-3 text-gray-500">
                       {new Date(customer.createdAt).toLocaleDateString(
                         "en-US",
                         {

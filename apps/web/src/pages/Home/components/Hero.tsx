@@ -14,31 +14,31 @@ const Hero = () => {
         backgroundPosition: "center",
       }}
     >
-      <div className="container mx-auto px-4 md:px-8 pt-12 flex flex-col lg:flex-row items-center gap-10 md:gap-12 lg:gap-0 h-full">
+      <div className="container mx-auto px-4 sm:px-6 md:px-8 pt-10 md:pt-12 flex flex-col lg:flex-row items-center gap-10 md:gap-12 lg:gap-0 h-full">
         {/* LEFT CONTENT */}
-        <div className="w-full lg:w-1/2 flex flex-col justify-center max-w-full space-y-6 md:space-y-8 lg:pr-10 md:pr-8">
+        <div className="w-full lg:w-1/2 flex flex-col justify-center max-w-full space-y-5 md:space-y-8 lg:pr-10 md:pr-8">
 
           {/* small badge */}
           <div className="bg-white rounded-full flex items-center gap-3 md:gap-4 px-3 md:px-5 py-2 shadow-sm w-fit">
             <div className="w-9 h-9 md:w-10 md:h-10 bg-background-secondary rounded-full flex items-center justify-center shadow-inner">
               <HiShoppingBag className="w-6 h-6 text-green-500" />
             </div>
-            <p className="text-sm md:text-heading-5 text-text-500">The Best Online Grocery Store</p>
+            <p className="text-body-sm sm:text-body-md text-text-500">The Best Online Grocery Store</p>
           </div>
 
           {/* MAIN TITLE */}
-          <h1 className="text-[2.2rem] md:text-[2.8rem] lg:text-h1 font-semibold text-text-500 leading-tight">
+          <h1 className="text-h1 font-semibold text-text-500">
             Your One Stop for <span className="text-green-500">Quality Groceries</span>
           </h1>
 
           {/* DESCRIPTION */}
-          <p className="text-body-md md:text-body-lg text-text-300 max-w-md md:max-w-lg leading-snug">
+          <p className="text-body-lg text-text-300 max-w-md md:max-w-lg">
             Freshness you can trust, prices you’ll love, everything you need all in one place.
             Wholesome food your family can rely on every single day.
           </p>
 
           {/* CTA BUTTON */}
-          <Link to="/all-categories" className="group flex items-center gap-2 stroke-green-500 bg-green-500 text-white px-5 md:px-7 h-11 md:h-12 rounded-full text-base font-medium hover:bg-white hover:stroke-green-500 hover:text-green-500 transition-colors duration-200 shadow-md w-fit min-w-[120px] md:min-w-[140px] overflow-hidden relative focus:outline-none border-2 border-transparent hover:border-green-500">
+          <Link to="/all-categories" className="group flex items-center gap-2 stroke-green-500 bg-green-500 text-white px-5 md:px-7 h-11 md:h-12 rounded-full text-body-md font-medium hover:bg-white hover:stroke-green-500 hover:text-green-500 transition-colors duration-200 shadow-md w-fit min-w-[120px] md:min-w-[140px] overflow-hidden relative focus:outline-none border-2 border-transparent hover:border-green-500">
             <span className="leading-tight">Shop Now</span>
             <span className="inline-flex items-center transition-transform duration-300 ease-out group-hover:translate-x-2">
               <HiArrowRight className="w-5 h-5" />
@@ -66,7 +66,7 @@ const Hero = () => {
             <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-green-500 flex items-center justify-center shadow-inner">
               <FaLeaf className="text-white text-base md:text-lg lg:text-xl" />
             </div>
-            <span className="text-xs md:text-sm lg:text-label text-text-500">Everyday Fresh</span>
+            <span className="text-body-xs sm:text-body-sm text-text-500 whitespace-nowrap">Everyday Fresh</span>
           </div>
 
           {/* FLOATING BADGE 2 */}
@@ -87,7 +87,7 @@ const Hero = () => {
             <div className="w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-green-500 flex items-center justify-center shadow-inner">
               <HiShoppingBag className="text-white w-4 h-4 md:w-5 md:h-5" />
             </div>
-            <span className="text-xs md:text-sm lg:text-label text-text-500">100% Organic</span>
+            <span className="text-body-xs sm:text-body-sm text-text-500 whitespace-nowrap">100% Organic</span>
           </div>
 
           {/* IMAGE */}

@@ -75,11 +75,11 @@ const ProductList: React.FC = () => {
         ]}
       />
 
-      <div className="container mx-auto px-4 my-14">
+      <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12">
         {/* Top controls */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h2 className={`text-h4 text-text-500 font-semibold ${search ? "" : "capitalize"}`}>
+        <div className="flex flex-wrap justify-between items-end gap-4 mb-6 md:mb-8">
+          <div className="min-w-0">
+            <h2 className={`text-h5 text-text-500 font-semibold ${search ? "" : "capitalize"}`}>
               {categoryLabel}
             </h2>
             {data?.pagination && (
@@ -90,7 +90,8 @@ const ProductList: React.FC = () => {
           </div>
 
           <select
-            className="border border-text-100 rounded-lg px-4 py-2 text-sm text-text-300"
+            aria-label="Sort products"
+            className="h-10 border border-text-100 rounded-lg px-3 text-body-sm text-text-400 bg-white"
             value={sort}
             onChange={(e) => handleSortChange(e.target.value)}
           >
@@ -104,11 +105,9 @@ const ProductList: React.FC = () => {
 
         {/* Loading state */}
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 justify-center">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex justify-center">
-                <div className="w-[280px] h-[380px] bg-background-secondary rounded-lg animate-pulse" />
-              </div>
+              <div key={i} className="aspect-[3/4] bg-background-secondary rounded-xl animate-pulse" />
             ))}
           </div>
         )}
@@ -143,11 +142,9 @@ const ProductList: React.FC = () => {
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 justify-center">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6">
                 {data.products.map((product) => (
-                  <div className="flex justify-center" key={product.id}>
-                    <ProductCard {...mapProductToCard(product)} />
-                  </div>
+                  <ProductCard key={product.id} {...mapProductToCard(product)} />
                 ))}
               </div>
             )}

@@ -180,7 +180,7 @@ export default function Checkout() {
     return (
       <>
         <PageHeader title="Checkout" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Checkout" }]} />
-        <div className="container mx-auto px-6 py-20 flex justify-center">
+        <div className="container mx-auto px-4 sm:px-6 py-20 flex justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-green-500" />
         </div>
       </>
@@ -191,7 +191,7 @@ export default function Checkout() {
     return (
       <>
         <PageHeader title="Checkout" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Checkout" }]} />
-        <div className="container mx-auto px-6 py-20 text-center">
+        <div className="container mx-auto px-4 sm:px-6 py-20 text-center">
           <ShoppingBag size={48} className="mx-auto text-text-100 mb-4" />
           <p className="text-text-300 text-body-lg mb-4">Your cart is empty</p>
           <Link to="/all-categories" className="btn-primary inline-block">
@@ -208,7 +208,7 @@ export default function Checkout() {
     <>
       <PageHeader title="Checkout" breadcrumbs={[{ label: "Home", href: "/" }, { label: "Cart", href: "/cart" }, { label: "Checkout" }]} />
 
-      <div className="container mx-auto px-6 py-10">
+      <div className="container mx-auto px-4 sm:px-6 py-8 md:py-12">
         {/* Progress */}
         <div className="flex items-center justify-center mb-10">
           {STEPS.map((s, i) => {
@@ -233,12 +233,12 @@ export default function Checkout() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <div className="lg:col-span-2">
             {/* Step 0: Review */}
             {step === 0 && (
-              <div className="card p-6">
-                <h2 className="text-h5 font-semibold text-text-500 mb-4">Review Your Items</h2>
+              <div className="card p-4 sm:p-6">
+                <h2 className="text-h6 font-semibold text-text-500 mb-4">Review Your Items</h2>
                 <div className="space-y-4">
                   {items.map((item) => (
                     <div key={item.id} className="flex gap-4 py-3 border-b border-text-50 last:border-0">
@@ -246,7 +246,7 @@ export default function Checkout() {
                         <img src={item.product.images?.[0]?.url || PLACEHOLDER_IMAGE} alt={item.product.name} className="w-full h-full object-contain p-1" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-body-sm font-medium text-text-500 truncate">{item.product.name}</p>
+                        <p className="text-body-sm font-medium text-text-500 line-clamp-2">{item.product.name}</p>
                         <p className="text-body-xs text-text-200">
                           Qty: {item.quantity} × ${parseFloat(item.product.price).toFixed(2)}
                         </p>
@@ -266,8 +266,8 @@ export default function Checkout() {
             {/* Step 1: Delivery / pickup */}
             {step === 1 && (
               <div className="space-y-6">
-                <div className="card p-6">
-                  <h2 className="text-h5 font-semibold text-text-500 mb-4">How would you like to get your order?</h2>
+                <div className="card p-4 sm:p-6">
+                  <h2 className="text-h6 font-semibold text-text-500 mb-4">How would you like to get your order?</h2>
                   <div className="grid grid-cols-2 gap-4">
                     {(
                       [
@@ -298,9 +298,9 @@ export default function Checkout() {
                 </div>
 
                 {fulfillmentType === "DELIVERY" && (
-                  <div className="card p-6">
+                  <div className="card p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-h5 font-semibold text-text-500">Delivery Address</h2>
+                      <h2 className="text-h6 font-semibold text-text-500">Delivery Address</h2>
                       {!showAddressForm && (
                         <button type="button" onClick={() => setShowAddressForm(true)} className="text-body-sm text-green-600 hover:text-green-700 flex items-center gap-1">
                           <Plus size={14} /> Add New
@@ -358,8 +358,8 @@ export default function Checkout() {
                   </div>
                 )}
 
-                <div className="card p-6">
-                  <h2 className="text-h5 font-semibold text-text-500 mb-3">Order Notes (Optional)</h2>
+                <div className="card p-4 sm:p-6">
+                  <h2 className="text-h6 font-semibold text-text-500 mb-3">Order Notes (Optional)</h2>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
@@ -373,8 +373,8 @@ export default function Checkout() {
 
             {/* Step 2: Payment */}
             {step === 2 && (
-              <div className="card p-6">
-                <h2 className="text-h5 font-semibold text-text-500 mb-4">Payment</h2>
+              <div className="card p-4 sm:p-6">
+                <h2 className="text-h6 font-semibold text-text-500 mb-4">Payment</h2>
 
                 {cardOrder ? (
                   <CardPayment order={cardOrder} publishableKey={settings?.stripe_publishable_key || ""} onDone={onCardPaid} />
@@ -429,7 +429,7 @@ export default function Checkout() {
 
             {/* Step 3: Confirmation */}
             {step === 3 && placed && (
-              <div className="card p-8 text-center">
+              <div className="card p-5 sm:p-8 text-center">
                 <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                   <CheckCircle size={32} className="text-green-600" />
                 </div>
@@ -485,7 +485,7 @@ export default function Checkout() {
           {/* Summary */}
           {step < 3 && (
             <div className="lg:col-span-1">
-              <div className="card p-6 sticky top-24">
+              <div className="card p-4 sm:p-6 sticky top-24">
                 <h3 className="text-h6 font-semibold text-text-500 mb-4">Order Summary</h3>
 
                 {previewError ? (
@@ -529,7 +529,7 @@ export default function Checkout() {
                     </div>
                     <div className="border-t border-text-50 pt-3 flex justify-between">
                       <span className="text-text-500 font-semibold">Total</span>
-                      <span className="text-h5 font-bold text-green-600">${preview.totalAmount.toFixed(2)}</span>
+                      <span className="text-h6 font-bold text-green-600">${preview.totalAmount.toFixed(2)}</span>
                     </div>
 
                     {fulfillmentType === "DELIVERY" && preview.shippingAmount > 0 && preview.subtotal < preview.freeDeliveryThreshold && (

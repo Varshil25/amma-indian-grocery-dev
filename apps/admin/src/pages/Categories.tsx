@@ -123,9 +123,9 @@ export default function Categories() {
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-center text-gray-600">{c._count?.products ?? 0}</td>
-      <td className="px-4 py-3 text-center text-gray-500">{c.sortOrder}</td>
-      <td className="px-4 py-3 text-center">
+      <td data-label="Products" className="px-4 py-3 text-center text-gray-600">{c._count?.products ?? 0}</td>
+      <td data-label="Order" className="px-4 py-3 text-center text-gray-500">{c.sortOrder}</td>
+      <td data-label="Status" className="px-4 py-3 text-center">
         <button
           onClick={() => toggle(c, "isActive")}
           className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -137,22 +137,22 @@ export default function Categories() {
           {c.isActive ? "Visible" : "Hidden"}
         </button>
       </td>
-      <td className="px-4 py-3 text-center">
+      <td data-label="Featured" className="px-4 py-3 text-center">
         <button onClick={() => toggle(c, "isFeatured")} title="Show on home page" aria-label={`Toggle featured for ${c.name}`}>
           <Star size={16} className={c.isFeatured ? "text-yellow-500 fill-yellow-400" : "text-gray-300"} />
         </button>
       </td>
-      <td className="px-4 py-3 text-center">
+      <td data-actions className="px-4 py-3 text-center">
         <div className="flex items-center justify-center gap-1">
           {!child && (
-            <button onClick={() => openCreate(c.id)} className="text-gray-500 hover:text-green-600 p-1" title="Add subcategory">
+            <button onClick={() => openCreate(c.id)} className="text-gray-500 hover:text-green-600 p-2 rounded-lg hover:bg-gray-100 transition" title="Add subcategory">
               <FolderTree size={15} />
             </button>
           )}
-          <button onClick={() => openEdit(c)} className="text-blue-500 hover:text-blue-600 p-1" title="Edit" aria-label={`Edit ${c.name}`}>
+          <button onClick={() => openEdit(c)} className="text-blue-500 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-100 transition" title="Edit" aria-label={`Edit ${c.name}`}>
             <Pencil size={15} />
           </button>
-          <button onClick={() => handleDelete(c)} className="text-red-500 hover:text-red-600 p-1" title="Delete" aria-label={`Delete ${c.name}`}>
+          <button onClick={() => handleDelete(c)} className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-gray-100 transition" title="Delete" aria-label={`Delete ${c.name}`}>
             <Trash2 size={15} />
           </button>
         </div>
@@ -181,7 +181,7 @@ export default function Categories() {
           <p className="px-4 py-12 text-center text-red-600 text-sm">{errorMessage(error, "Couldn't load categories")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="table-cards w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Category</th>

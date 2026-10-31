@@ -32,7 +32,7 @@ export default function Cart() {
       />
 
       <section className="section-padding">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-4 sm:px-6">
           {isLoading ? (
             <div className="space-y-4">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -42,7 +42,7 @@ export default function Cart() {
           ) : !cart?.items.length ? (
             <div className="text-center py-20">
               <ShoppingBag size={56} className="mx-auto text-text-100 mb-4" />
-              <h2 className="text-h4 font-semibold text-text-500 mb-2">
+              <h2 className="text-h5 font-semibold text-text-500 mb-2">
                 Your cart is empty
               </h2>
               <p className="text-text-300 text-body-md mb-8">
@@ -56,7 +56,7 @@ export default function Cart() {
               </Link>
             </div>
           ) : (
-            <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
               {/* Cart Items */}
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-6">
@@ -79,13 +79,13 @@ export default function Cart() {
                     return (
                       <div
                         key={item.id}
-                        className={`card p-4 flex gap-4 ${
+                        className={`card p-3 sm:p-4 flex gap-3 sm:gap-4 ${
                           !item.inStock ? "border-red-200 bg-red-50/30" : ""
                         }`}
                       >
                         <Link
                           to={`/product/${item.product.slug}`}
-                          className="w-24 h-24 shrink-0 rounded-lg bg-background-secondary flex items-center justify-center"
+                          className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-lg bg-background-secondary flex items-center justify-center"
                         >
                           {image ? (
                             <img src={image} alt={item.product.name} className="w-full h-full object-contain p-2" />
@@ -95,11 +95,11 @@ export default function Cart() {
                         </Link>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
+                          <div className="flex items-start justify-between gap-2 sm:gap-4">
+                            <div className="min-w-0">
                               <Link
                                 to={`/product/${item.product.slug}`}
-                                className="text-body-md font-medium text-text-500 hover:text-green-600 transition"
+                                className="text-body-sm sm:text-body-md font-medium text-text-500 hover:text-green-600 transition line-clamp-2"
                               >
                                 {item.product.name}
                               </Link>
@@ -113,13 +113,13 @@ export default function Cart() {
                             <button
                               onClick={() => removeMutation.mutate(item.productId)}
                               aria-label={`Remove ${item.product.name} from cart`}
-                              className="p-2 text-text-200 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                              className="shrink-0 p-2 -mr-2 -mt-1 text-text-200 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
                             >
                               <Trash2 size={18} />
                             </button>
                           </div>
 
-                          <div className="flex items-center justify-between mt-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
                             <div className="flex items-center gap-1 border border-text-100 rounded-lg">
                               <button
                                 onClick={() =>
@@ -132,7 +132,7 @@ export default function Cart() {
                               >
                                 <Minus size={16} />
                               </button>
-                              <span className="w-10 text-center font-semibold text-text-500">
+                              <span className="w-8 sm:w-10 text-center font-semibold text-text-500">
                                 {item.quantity}
                               </span>
                               <button
@@ -146,7 +146,7 @@ export default function Cart() {
                                 <Plus size={16} />
                               </button>
                             </div>
-                            <span className="text-body-lg font-semibold text-text-500">
+                            <span className="text-body-md sm:text-body-lg font-semibold text-text-500">
                               ${item.lineTotal.toFixed(2)}
                             </span>
                           </div>
@@ -159,8 +159,8 @@ export default function Cart() {
 
               {/* Order Summary */}
               <div className="lg:w-96 shrink-0">
-                <div className="card p-6 sticky top-24">
-                  <h3 className="text-h5 font-semibold text-text-500 mb-6">
+                <div className="card p-4 sm:p-6 sticky top-24">
+                  <h3 className="text-h6 font-semibold text-text-500 mb-5">
                     Order Summary
                   </h3>
 

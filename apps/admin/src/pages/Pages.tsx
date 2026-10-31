@@ -109,7 +109,7 @@ export default function Pages() {
 
       {/* Edit / Create Form */}
       {isFormOpen && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-semibold text-gray-900">
               {editing ? `Edit: ${editing.title}` : "Create New Page"}
@@ -203,7 +203,7 @@ export default function Pages() {
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full">
+          <table className="table-cards w-full">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="text-left text-xs font-medium text-gray-500 uppercase px-6 py-3">Title</th>
@@ -227,23 +227,23 @@ export default function Pages() {
                       <span className="text-sm font-medium text-gray-900">{page.title}</span>
                       {!page.isActive && <span className="ml-2 text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">Draft</span>}
                     </td>
-                    <td className="px-6 py-4">
+                    <td data-label="Slug" className="px-6 py-4">
                       <code className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">/{page.slug}</code>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td data-label="Updated" className="px-6 py-4 text-sm text-gray-500">
                       {new Date(page.updatedAt).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td data-actions className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleEdit(page)}
-                        className="text-green-600 hover:text-green-700 p-1"
+                        className="text-green-600 hover:text-green-700 p-2 rounded-lg hover:bg-gray-100 transition"
                         aria-label={`Edit ${page.title}`}
                       >
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => handleDelete(page)}
-                        className="text-red-500 hover:text-red-600 p-1"
+                        className="text-red-500 hover:text-red-600 p-2 rounded-lg hover:bg-gray-100 transition"
                         aria-label={`Delete ${page.title}`}
                       >
                         <Trash2 size={16} />
